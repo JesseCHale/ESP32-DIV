@@ -42,6 +42,21 @@
 
 ---
 
+## ⚠️ V1 Board Owners
+
+**This firmware is for original V1 ESP32-DIV boards** (ESP32-WROOM-32U).
+
+CiferTech's official v1.5.0 firmware targets the newer V2 boards with ESP32-S3. If you have a V1 board, that firmware won't work for you.
+
+**HaleHound Edition keeps V1 boards alive** with 22 bug fixes and continued support.
+
+| Your Board | Firmware |
+|------------|----------|
+| V1 (ESP32-WROOM-32U) | **HaleHound Edition** ← You're here |
+| V2 (ESP32-S3) | CiferTech v1.5.0 |
+
+---
+
 ## Hardware Requirements
 
 | Component | Specification |

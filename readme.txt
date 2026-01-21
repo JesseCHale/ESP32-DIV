@@ -1,8 +1,41 @@
+```
+                            .......::.:....
+                       ..::------------------::..
+                     .:-=======================-::.
+                   .:---====================-----::.
+                 .:::::::-----=-----=--=---:::::::...
+               ....:::::----====-=--====--------:::...
+               ...::------::---=========--::::::--::.
+               ....:::........:.:::::::..........:::.
+                .....      ........::..      ...   ..
+                . .            ..::....       ...
+                             ...::.   ...
+                  ..         .::.      ...          .
+                 .:..     ......        .....      ....
+              ... .:...........      .    .   .....::.
+              ........  ..   ...       .....  ..........
+                            .....      .....   ...
+                             ...... .......
+                          ...::.........:::.
+                         ....... ....:......
+                         ....     .  ....
+
+  ██░ ██  ▄▄▄       ██▓    ▓█████     ██░ ██  ▒█████   █    ██  ███▄    █ ▓█████▄
+ ▓██░ ██▒▒████▄    ▓██▒    ▓█   ▀    ▓██░ ██▒▒██▒  ██▒ ██  ▓██▒ ██ ▀█   █ ▒██▀ ██▌
+ ▒██▀▀██░▒██  ▀█▄  ▒██░    ▒███      ▒██▀▀██░▒██░  ██▒▓██  ▒██░▓██  ▀█ ██▒░██   █▌
+ ░▓█ ░██ ░██▄▄▄▄██ ▒██░    ▒▓█  ▄    ░▓█ ░██ ▒██   ██░▓▓█  ░██░▓██▒  ▐▌██▒░▓█▄   ▌
+ ░▓█▒░██▓ ▓█   ▓██▒░██████▒░▒████▒   ░▓█▒░██▓░ ████▓▒░▒▒█████▓ ▒██░   ▓██░░▒████▓
+  ▒ ░░▒░▒ ▒▒   ▓▒█░░ ▒░▓  ░░░ ▒░ ░    ▒ ░░▒░▒░ ▒░▒░▒░ ░▒▓▒ ▒ ▒ ░ ▒░   ▒ ▒  ▒▒▓  ▒
+  ▒ ░▒░ ░  ▒   ▒▒ ░░ ░ ▒  ░ ░ ░  ░    ▒ ░▒░ ░  ░ ▒ ▒░ ░░▒░ ░ ░ ░ ░░   ░ ▒░ ░ ▒  ▒
+  ░  ░░ ░  ░   ▒     ░ ░      ░       ░  ░░ ░░ ░ ░ ▒   ░░░ ░ ░    ░   ░ ░  ░ ░  ░
+  ░  ░  ░      ░  ░    ░  ░   ░  ░    ░  ░  ░    ░ ░     ░              ░    ░
+```
+
 ================================================================================
                          ESP32-DIV FIRMWARE v2.0
-                      FENRIR UPGRADES EDITION
-                         Prepared for CiferTech
-                           January 3, 2026
+                          HALEHOUND EDITION
+                              by JMFH
+                           January 2026
 ================================================================================
 
 This is a fully upgraded and audited version of the ESP32-DIV firmware with
@@ -13,13 +46,16 @@ major new features, hardware support additions, and comprehensive bug fixes.
 ================================================================================
 
 DISPLAY:
-  - 2.4" TFT LCD (240x320) with XPT2046 Touch Controller
+  - 2.8" TFT LCD (240x320) with XPT2046 Touch Controller
   - Full touchscreen support for all menus and features
 
 RADIOS:
   - ESP32 WiFi/BLE (built-in)
   - CC1101 SubGHz Transceiver (300-928 MHz)
   - NRF24L01+ 2.4GHz Transceiver
+
+MCU:
+  - ESP32-WROOM-32U
 
 CONTROLS:
   - PCF8574 I2C GPIO Expander for physical buttons
@@ -201,6 +237,18 @@ STORAGE:
    - Temperature monitoring
 
 ================================================================================
+                    HALEHOUND VISUAL CHANGES
+================================================================================
+
+This edition features a complete visual overhaul:
+
+- Custom Color Palette: Magenta (#FF5EF2) and Cyan (#00CFFF) theme
+- Skull Menu Icons: 8 custom 16x16 skull-themed navigation icons
+- Splash Screen: Full-screen HaleHound branded startup
+- Transparent Buttons: Clean button styling with cyan/magenta borders
+- Updated Branding: "v2.0 - FENRIR Edition" and "by HaleHound" on device
+
+================================================================================
                     UI/UX IMPROVEMENTS
 ================================================================================
 
@@ -213,8 +261,11 @@ STORAGE:
 - Icon-based navigation
 
 ================================================================================
-                         BUG FIXES (17 Total)
+                         BUG FIXES (22 Total)
 ================================================================================
+
+ORIGINAL FENRIR FIXES (17):
+---------------------------
 
 HIGH PRIORITY (7):
   1. wifi.cpp:2559      - Buffer overflow in deauth frame (was [26], now [24])
@@ -232,11 +283,85 @@ MEDIUM PRIORITY (5):
   4. utils.cpp:144      - Unused sdAvailable global removed
   5. utils.h:23         - Orphaned initDisplay() declaration removed
 
-LOW PRIORITY (4):
+LOW PRIORITY (5):
   1. ESP32-DIV.ino      - Unused variable 'z' removed (8 locations)
   2. subghz.cpp         - Duplicate MAX_PROFILES macros removed
   3. wificonfig.h       - Duplicate includes removed (3)
   4. bleconfig.h        - Duplicate esp_bt.h include removed
+
+HALEHOUND EDITION FIXES (5):
+----------------------------
+
+1. Assignment vs Comparison Bug (wifi.cpp:765)
+   Problem: Used `=` instead of `==`, causing condition to always be true.
+
+   // BEFORE (BUG):
+   if (activeIcon = 3) {  // Assignment - always true!
+
+   // AFTER (FIXED):
+   if (activeIcon == 3) {  // Proper comparison
+
+2. Null Task Handle Crash (wifi.cpp:1280-1292)
+   Problem: Deleting task handles without null checks caused crashes on exit.
+
+   // BEFORE (BUG):
+   vTaskDelete(wifiScanTaskHandle);    // Crash if NULL!
+
+   // AFTER (FIXED):
+   if (wifiScanTaskHandle != NULL) {
+       vTaskDelete(wifiScanTaskHandle);
+       wifiScanTaskHandle = NULL;
+   }
+
+3. CC1101 TX/RX Pin Swap (subghz.cpp:561,574,1368,1381)
+   Problem: TX and RX data lines were swapped. GDO0 is TX, GDO2 is RX.
+
+   // BEFORE (BUG):
+   mySwitch.enableTransmit(TX_PIN);  // Wrong - TX_PIN is GDO2 (RX line)
+   mySwitch.enableReceive(RX_PIN);   // Wrong - RX_PIN is GDO0 (TX line)
+
+   // AFTER (FIXED):
+   mySwitch.enableTransmit(RX_PIN);  // RX_PIN=16=GDO0 is TX data line
+   mySwitch.enableReceive(TX_PIN);   // TX_PIN=26=GDO2 is RX data line
+
+4. RMT Pulse Truncation (subghz.cpp:2538-2560)
+   Problem: ESP32 RMT max duration is 32767us. Long pilot pulses were truncated.
+
+   // BEFORE (BUG):
+   rmtSymbols[0].duration1 = (proto.pilotLow > 32767) ? 32767 : proto.pilotLow;
+   // Truncates to 32767 - breaks protocols with longer pilots!
+
+   // AFTER (FIXED):
+   if (proto.pilotLow > 32767) {
+       rmtSymbols[0].duration1 = 32767;
+       rmtSymbols[1].level0 = 0;  // Continue LOW
+       rmtSymbols[1].duration0 = proto.pilotLow - 32767;
+       pilotSymbols = 2;  // Use 2 symbols for long pulse
+   }
+
+5. Beacon SSID Overflow (wifi.cpp:549-572)
+   Problem: Fixed packet offsets didn't account for variable SSID length.
+
+   // BEFORE (BUG):
+   for (int i = 38 + ssidLength; i <= 43; i++) packet[i] = 0x00;
+   packet[56] = spamchannel;  // Fixed position - wrong for short SSIDs!
+   esp_wifi_80211_tx(..., 57, false);  // Fixed size - malformed packet!
+
+   // AFTER (FIXED):
+   if (ssidLength > 32) ssidLength = 32;  // Prevent overflow
+   int ratesOffset = 38 + ssidLength;     // Dynamic position
+   int dsOffset = ratesOffset + 10;
+   packet[dsOffset + 2] = spamchannel;    // Correct position
+   int packetSize = dsOffset + 3;
+   esp_wifi_80211_tx(..., packetSize, false);  // Correct size
+
+================================================================================
+                    STABILITY IMPROVEMENTS
+================================================================================
+
+- 46 button debounce loops: Added delay(10); yield(); to prevent watchdog resets
+- 16 recursive calls removed: Eliminated stack overflow from recursive handleButtons() calls
+- RMT driver cleanup: Proper rmt_driver_uninstall() on SubGHz exit
 
 ================================================================================
                           PIN CONFIGURATION
@@ -254,7 +379,8 @@ Touch Controller (XPT2046):
 
 CC1101 SubGHz:
   - Standard SPI pins
-  - GDO0 for signal detection
+  - GDO0 (GPIO 16) for TX data
+  - GDO2 (GPIO 26) for RX data
 
 NRF24L01:
   - CE:  GPIO 4
@@ -312,14 +438,17 @@ Build Statistics:
   shared.h          - Shared definitions
   Touchscreen.cpp   - Touch calibration and handling
   Touchscreen.h     - Touch declarations
+  skull_bg.h        - HaleHound skull background graphic
+  home_bg.h         - HaleHound home screen background
 
 ================================================================================
                              CREDITS
 ================================================================================
 
-Original Firmware: CiferTech
-Upgrades & Audit:  HaleHound Security (FENRIR Division)
-Date:              January 3, 2026
+Original Firmware: CiferTech (https://github.com/cifertech)
+HaleHound Edition: JMFH
+GitHub:            https://github.com/JesseCHale/ESP32-DIV
+Date:              January 2026
 
 New Features Added:
   - 2.4GHz Spectrum Analyzer
@@ -330,6 +459,7 @@ New Features Added:
   - Brightness Control
   - Screen Timeout
   - Full Touch Support
+  - HaleHound Visual Theme
 
 ================================================================================
                    For authorized security research only.

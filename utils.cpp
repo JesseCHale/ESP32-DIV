@@ -302,12 +302,12 @@ void loading(int frameDelay, uint16_t color, int16_t x, int16_t y, int repeats, 
   int16_t bitmapHeight = 120;
   int16_t logoX = x;
   int16_t logoY = y;
+  int16_t screenWidth = tft.width();
+  int16_t screenHeight = tft.height();
 
   if (center) {
-    int16_t screenWidth = tft.width();
-    int16_t screenHeight = tft.height();
-    logoX = (screenWidth - bitmapWidth) / 2;   
-    logoY = (screenHeight - bitmapHeight) / 2; 
+    logoX = (screenWidth - bitmapWidth) / 2;
+    logoY = (screenHeight - bitmapHeight) / 2 - 25;  // Move up for text
   }
 
   // Array of bitmaps
@@ -323,12 +323,36 @@ void loading(int frameDelay, uint16_t color, int16_t x, int16_t y, int repeats, 
     bitmap_icon_skull_loading_9,
     bitmap_icon_skull_loading_10
   };
-  const int numFrames = 10; 
+  const int numFrames = 10;
+
+  // HaleHound colors - alternating magenta and cyan
+  uint16_t colors[] = {HALEHOUND_MAGENTA, HALEHOUND_CYAN};
 
   for (int r = 0; r < repeats; r++) {
     for (int i = 0; i < numFrames; i++) {
-      tft.fillRect(logoX, logoY, bitmapWidth, bitmapHeight, TFT_BLACK); 
-      tft.drawBitmap(logoX, logoY, bitmaps[i], bitmapWidth, bitmapHeight, color);  
+      uint16_t frameColor = colors[i % 2];  // Alternate colors
+
+      // Clear skull area
+      tft.fillRect(logoX, logoY, bitmapWidth, bitmapHeight + 40, TFT_BLACK);
+
+      // Draw skull frame
+      tft.drawBitmap(logoX, logoY, bitmaps[i], bitmapWidth, bitmapHeight, frameColor);
+
+      // Draw HALEHOUND text below skull
+      if (center) {
+        tft.setTextFont(4);
+        tft.setTextSize(1);
+        tft.setTextColor(frameColor, TFT_BLACK);
+
+        const char* text = "HALEHOUND";
+        int16_t textW = tft.textWidth(text);
+        int16_t textX = (screenWidth - textW) / 2;
+        int16_t textY = logoY + bitmapHeight + 10;
+
+        tft.setCursor(textX, textY);
+        tft.print(text);
+      }
+
       delay(frameDelay);
     }
   }
@@ -342,47 +366,46 @@ void loading(int frameDelay, uint16_t color, int16_t x, int16_t y, int repeats, 
  */
 
 void displayLogo(uint16_t color, int displayTime) {
-  int16_t bitmapWidth = 150;
-  int16_t bitmapHeight = 150;
   int16_t screenWidth = tft.width();
   int16_t screenHeight = tft.height();
-  int16_t logoX = (screenWidth - bitmapWidth) / 2;
-  int16_t logoY = (screenHeight - bitmapHeight) / 2 - 20;
 
-  tft.fillRect(logoX, logoY, bitmapWidth, bitmapHeight, TFT_BLACK);
-  tft.drawBitmap(logoX, logoY, bitmap_icon_cifer, bitmapWidth, bitmapHeight, color);
+  // Clear screen with black
+  tft.fillScreen(TFT_BLACK);
 
-  tft.setTextColor(color);
-  tft.setTextFont(1);
+  // Draw full-screen skull stack in muted gray
+  tft.drawBitmap(0, 0, bitmap_halehound_splash, HALEHOUND_SPLASH_WIDTH, HALEHOUND_SPLASH_HEIGHT, GRAY);
 
-  tft.setTextSize(2);
-  int16_t textWidth = tft.textWidth("ESP32-DIV", 2);
-  int16_t textX = screenWidth / 3.5;
-  int16_t textY = logoY + bitmapHeight + 10;
-  tft.setCursor(textX, textY);
-  tft.print("ESP32-DIV");
+  // Draw branding text in HaleHound magenta
+  tft.setTextColor(HALEHOUND_MAGENTA);
 
+  // ESP32-DIV title - larger
+  tft.setTextFont(4);  // Font 4 = 26px, clean and sharp
   tft.setTextSize(1);
-  textWidth = tft.textWidth("by CiferTech", 1);
-  textX = screenWidth / 3.5;
-  textY += 20;
-  tft.setCursor(textX, textY);
-  tft.print("by CiferTech");
+  String title = "ESP32-DIV";
+  int16_t titleWidth = tft.textWidth(title);
+  tft.setCursor((screenWidth - titleWidth) / 2, 255);
+  tft.print(title);
 
-  textWidth = tft.textWidth("v1.1.0", 1);
-  textX = screenWidth / 2.5;
-  textY += 50;
-  tft.setCursor(textX, textY);
-  tft.print("v1.1.0");
+  // Version line
+  tft.setTextFont(2);  // Font 2 = 16px
+  String version = "v2.0 - FENRIR Edition";
+  int16_t versionWidth = tft.textWidth(version);
+  tft.setCursor((screenWidth - versionWidth) / 2, 285);
+  tft.print(version);
 
-  Serial.println("==================================");
-  Serial.println("ESP32-DIV                         ");
-  Serial.println("Developed by: CiferTech           ");
-  Serial.println("Version:      1.1.0               ");
-  Serial.println("Contact:      cifertech@gmail.com ");
-  Serial.println("GitHub:       github.com/cifertech");
-  Serial.println("Website:      CiferTech.net       ");
-  Serial.println("==================================");
+  // Credit line
+  tft.setTextFont(2);
+  String credit = "by HaleHound";
+  int16_t creditWidth = tft.textWidth(credit);
+  tft.setCursor((screenWidth - creditWidth) / 2, 303);
+  tft.print(credit);
+
+  Serial.println("==========================================");
+  Serial.println("ESP32-DIV v2.0 - FENRIR Edition           ");
+  Serial.println("Developed by: HaleHound                   ");
+  Serial.println("Original by:  CiferTech                   ");
+  Serial.println("GitHub:       github.com/JesseCHale       ");
+  Serial.println("==========================================");
 
   delay(displayTime);
 }

@@ -10,6 +10,7 @@
 #include "utils.h"
 #include "shared.h"
 #include "icon.h"
+#include "skull_bg.h"
 
 TFT_eSPI tft = TFT_eSPI();
 
@@ -36,14 +37,14 @@ const char *menu_items[NUM_MENU_ITEMS] = {
     "About"};
 
 const unsigned char *bitmap_icons[NUM_MENU_ITEMS] = {
-    bitmap_icon_wifi,
-    bitmap_icon_spoofer,
-    bitmap_icon_jammer,
-    bitmap_icon_analyzer,
-    bitmap_icon_led,
-    bitmap_icon_stat,
-    bitmap_icon_setting,
-    bitmap_icon_question};
+    bitmap_icon_skull_wifi,
+    bitmap_icon_skull_bluetooth,
+    bitmap_icon_skull_jammer,
+    bitmap_icon_skull_subghz,
+    bitmap_icon_skull_ir,
+    bitmap_icon_skull_tools,
+    bitmap_icon_skull_setting,
+    bitmap_icon_skull_about};
 
 int current_menu_index = 0;
 bool is_main_menu = false;
@@ -344,22 +345,30 @@ const uint16_t icon_colors[NUM_MENU_ITEMS] = {
     tft.setTextFont(2);
 
     if (!menu_initialized) {
-        tft.fillScreen(0x20e4);
+        // Black background with skull in magenta
+        tft.fillScreen(TFT_BLACK);
+
+        // Center the skull on screen
+        int skullX = (240 - SKULL_BG_WIDTH) / 2;
+        int skullY = (320 - SKULL_BG_HEIGHT) / 2;
+
+        // Draw skull in dark magenta (subtle background)
+        tft.drawBitmap(skullX, skullY, skull_bg_bitmap, SKULL_BG_WIDTH, SKULL_BG_HEIGHT, 0x4808);
 
         for (int i = 0; i < NUM_MENU_ITEMS; i++) {
-            int column = i / 4; 
-            int row = i % 4; 
+            int column = i / 4;
+            int row = i % 4;
             int x_position = (column == 0) ? X_OFFSET_LEFT : X_OFFSET_RIGHT;
             int y_position = Y_START + row * Y_SPACING;
 
-            tft.fillRoundRect(x_position, y_position, 100, 60, 5, TFT_DARKBLUE); 
-            tft.drawRoundRect(x_position, y_position, 100, 60, 5, TFT_GRAY); 
-            tft.drawBitmap(x_position + 42, y_position + 10, bitmap_icons[i], 16, 16, icon_colors[i]);
+            // Clear/transparent button - just border, no fill
+            tft.drawRoundRect(x_position, y_position, 100, 60, 5, HALEHOUND_CYAN);
+            tft.drawBitmap(x_position + 42, y_position + 10, bitmap_icons[i], 16, 16, HALEHOUND_CYAN);
 
-            tft.setTextColor(SHREDDY_TEAL, TFT_DARKBLUE);
-            int textWidth = 6 * strlen(menu_items[i]); 
-            int textX = x_position + (100 - textWidth) / 2; 
-            int textY = y_position + 30; 
+            tft.setTextColor(HALEHOUND_CYAN);  // Transparent background
+            int textWidth = 6 * strlen(menu_items[i]);
+            int textX = x_position + (100 - textWidth) / 2;
+            int textY = y_position + 30;
             tft.setCursor(textX, textY);
             tft.print(menu_items[i]);
         }
@@ -374,12 +383,12 @@ const uint16_t icon_colors[NUM_MENU_ITEMS] = {
             int x_position = (column == 0) ? X_OFFSET_LEFT : X_OFFSET_RIGHT;
             int y_position = Y_START + row * Y_SPACING;
 
-            if (i == last_menu_index) { 
-                tft.fillRoundRect(x_position, y_position, 100, 60, 5, TFT_DARKBLUE); 
-                tft.drawRoundRect(x_position, y_position, 100, 60, 5, TFT_GRAY); 
-                tft.setTextColor(SHREDDY_TEAL, TFT_DARKBLUE);
-                tft.drawBitmap(x_position + 42, y_position + 10, bitmap_icons[last_menu_index], 16, 16, icon_colors[last_menu_index]); 
-                int textWidth = 6 * strlen(menu_items[last_menu_index]); 
+            if (i == last_menu_index) {
+                // Deselected - redraw border in cyan (erase magenta border)
+                tft.drawRoundRect(x_position, y_position, 100, 60, 5, HALEHOUND_CYAN);
+                tft.drawBitmap(x_position + 42, y_position + 10, bitmap_icons[last_menu_index], 16, 16, HALEHOUND_CYAN);
+                tft.setTextColor(HALEHOUND_CYAN);
+                int textWidth = 6 * strlen(menu_items[last_menu_index]);
                 int textX = x_position + (100 - textWidth) / 2;
                 int textY = y_position + 30;
                 tft.setCursor(textX, textY);
@@ -392,12 +401,11 @@ const uint16_t icon_colors[NUM_MENU_ITEMS] = {
         int x_position = (column == 0) ? X_OFFSET_LEFT : X_OFFSET_RIGHT;
         int y_position = Y_START + row * Y_SPACING;
 
-        tft.fillRoundRect(x_position, y_position, 100, 60, 5, TFT_DARKBLUE); 
-        tft.drawRoundRect(x_position, y_position, 100, 60, 5, ORANGE); 
-
-        tft.setTextColor(ORANGE, TFT_DARKBLUE);
-        tft.drawBitmap(x_position + 42, y_position + 10, bitmap_icons[current_menu_index], 16, 16, SELECTED_ICON_COLOR); 
-        int textWidth = 6 * strlen(menu_items[current_menu_index]); 
+        // Selected button - magenta border and text
+        tft.drawRoundRect(x_position, y_position, 100, 60, 5, HALEHOUND_MAGENTA);
+        tft.drawBitmap(x_position + 42, y_position + 10, bitmap_icons[current_menu_index], 16, 16, HALEHOUND_MAGENTA);
+        tft.setTextColor(HALEHOUND_MAGENTA);
+        int textWidth = 6 * strlen(menu_items[current_menu_index]);
         int textX = x_position + (100 - textWidth) / 2;
         int textY = y_position + 30;
         tft.setCursor(textX, textY);
@@ -462,6 +470,7 @@ void handleWiFiSubmenuButtons() {
                     displaySubmenu();           
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -496,6 +505,7 @@ void handleWiFiSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -530,6 +540,7 @@ void handleWiFiSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -564,6 +575,7 @@ void handleWiFiSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -598,6 +610,7 @@ void handleWiFiSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -633,6 +646,7 @@ void handleWiFiSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -698,7 +712,8 @@ void handleWiFiSubmenuButtons() {
                             displaySubmenu();           
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -730,7 +745,8 @@ void handleWiFiSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -762,7 +778,8 @@ void handleWiFiSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -794,7 +811,8 @@ void handleWiFiSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -826,7 +844,8 @@ void handleWiFiSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -858,7 +877,8 @@ void handleWiFiSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -932,6 +952,7 @@ void handleBluetoothSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -966,6 +987,7 @@ void handleBluetoothSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -1000,6 +1022,7 @@ void handleBluetoothSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -1035,6 +1058,7 @@ void handleBluetoothSubmenuButtons() {
                     displaySubmenu();
                     delay(200);
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }
                     break;
                 }
@@ -1070,6 +1094,7 @@ void handleBluetoothSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -1135,7 +1160,8 @@ void handleBluetoothSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -1167,7 +1193,8 @@ void handleBluetoothSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -1199,7 +1226,8 @@ void handleBluetoothSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -1232,7 +1260,8 @@ void handleBluetoothSubmenuButtons() {
                             displaySubmenu();
                             delay(200);
                             while (isButtonPressed(BTN_SELECT)) {
-                            }
+                                delay(10); yield();
+                    }
                             break;
                         }
                     }
@@ -1265,7 +1294,8 @@ void handleBluetoothSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -1339,6 +1369,7 @@ void handleNRFSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -1374,6 +1405,7 @@ void handleNRFSubmenuButtons() {
                     displaySubmenu();
                     delay(200);
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }
                     break;
                 }
@@ -1409,6 +1441,7 @@ void handleNRFSubmenuButtons() {
                     displaySubmenu();
                     delay(200);
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }
                     break;
                 }
@@ -1443,6 +1476,7 @@ void handleNRFSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -1508,7 +1542,8 @@ void handleNRFSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -1541,7 +1576,8 @@ void handleNRFSubmenuButtons() {
                             displaySubmenu();
                             delay(200);
                             while (isButtonPressed(BTN_SELECT)) {
-                            }
+                                delay(10); yield();
+                    }
                             break;
                         }
                     }
@@ -1574,7 +1610,8 @@ void handleNRFSubmenuButtons() {
                             displaySubmenu();
                             delay(200);
                             while (isButtonPressed(BTN_SELECT)) {
-                            }
+                                delay(10); yield();
+                    }
                             break;
                         }
                     }
@@ -1606,7 +1643,8 @@ void handleNRFSubmenuButtons() {
                             displaySubmenu();
                             delay(200);
                             while (isButtonPressed(BTN_SELECT)) {
-                            }
+                                delay(10); yield();
+                    }
                             break;
                         }
                     }
@@ -1682,6 +1720,7 @@ void handleSubGHzSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -1718,6 +1757,7 @@ void handleSubGHzSubmenuButtons() {
                     displaySubmenu();
                     delay(200);
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }
                     break;
                 }
@@ -1754,6 +1794,7 @@ void handleSubGHzSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -1791,6 +1832,7 @@ void handleSubGHzSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -1860,7 +1902,8 @@ void handleSubGHzSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -1894,7 +1937,8 @@ void handleSubGHzSubmenuButtons() {
                             displaySubmenu();
                             delay(200);
                             while (isButtonPressed(BTN_SELECT)) {
-                            }
+                                delay(10); yield();
+                    }
                             break;
                         }
                     }
@@ -1928,7 +1972,8 @@ void handleSubGHzSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }                  
@@ -1962,7 +2007,8 @@ void handleSubGHzSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }                  
@@ -2355,6 +2401,7 @@ void handleToolsSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -2389,6 +2436,7 @@ void handleToolsSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -2456,7 +2504,8 @@ void handleToolsSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -2488,7 +2537,8 @@ void handleToolsSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }                  
@@ -2562,6 +2612,7 @@ void handleIRSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -2596,6 +2647,7 @@ void handleIRSubmenuButtons() {
                     displaySubmenu(); 
                     delay(200);            
                     while (isButtonPressed(BTN_SELECT)) {
+                        delay(10); yield();
                     }           
                     break;  
                 }
@@ -2663,7 +2715,8 @@ void handleIRSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }
@@ -2695,7 +2748,8 @@ void handleIRSubmenuButtons() {
                             displaySubmenu(); 
                             delay(200);            
                             while (isButtonPressed(BTN_SELECT)) {
-                            }           
+                                delay(10); yield();
+                    }           
                             break;  
                         }
                     }                  
@@ -2984,7 +3038,7 @@ void setup() {
   
   tft.fillScreen(TFT_BLACK);
 
-  displayLogo(SHREDDY_TEAL, 2000);
+  displayLogo(HALEHOUND_MAGENTA, 3500);  // 3.5 seconds
   
   //pinMode(36, INPUT);
   //pinMode(BACKLIGHT_PIN, OUTPUT);

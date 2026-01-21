@@ -547,19 +547,29 @@ void spammer() {
 
   String randomSSID = ssidList[random(ssidCount)];
   int ssidLength = randomSSID.length();
+  if (ssidLength > 32) ssidLength = 32;  // Cap at max SSID length to prevent overflow
   packet[37] = ssidLength;
 
   for (int i = 0; i < ssidLength; i++) {
     packet[38 + i] = randomSSID[i];
   }
 
-  for (int i = 38 + ssidLength; i <= 43; i++) {
-    packet[i] = 0x00;
-  }
+  // Recalculate positions based on actual SSID length
+  int ratesOffset = 38 + ssidLength;
+  packet[ratesOffset] = 0x01;      // Supported rates tag
+  packet[ratesOffset + 1] = 0x08;  // Length
+  packet[ratesOffset + 2] = 0x82; packet[ratesOffset + 3] = 0x84;
+  packet[ratesOffset + 4] = 0x8b; packet[ratesOffset + 5] = 0x96;
+  packet[ratesOffset + 6] = 0x24; packet[ratesOffset + 7] = 0x30;
+  packet[ratesOffset + 8] = 0x48; packet[ratesOffset + 9] = 0x6c;
 
-  packet[56] = spamchannel;
+  int dsOffset = ratesOffset + 10;
+  packet[dsOffset] = 0x03;         // DS Parameter tag
+  packet[dsOffset + 1] = 0x01;     // Length
+  packet[dsOffset + 2] = spamchannel;
 
-  esp_wifi_80211_tx(WIFI_IF_AP, packet, 57, false);
+  int packetSize = dsOffset + 3;
+  esp_wifi_80211_tx(WIFI_IF_AP, packet, packetSize, false);
 
   delay(1);
 }
@@ -762,11 +772,11 @@ void runUI() {
         if (millis() - lastSpamTime >= 50) {
           spammer();
           
-          if (activeIcon = 3) { 
+          if (activeIcon == 3) {
             output();
           }
-          if (activeIcon = 3) {
-            animationState = 5;  
+          if (activeIcon == 3) {
+            animationState = 5;
           }
           lastSpamTime = millis();
         }
@@ -1277,11 +1287,9 @@ void deauthdetectLoop() {
   checkButtonPress();
 
   if (stopScan || exitMode) {
-    vTaskDelete(wifiScanTaskHandle);
-    wifiScanTaskHandle = NULL;
-    vTaskDelete(uiTaskHandle);
-    uiTaskHandle = NULL;
-    vTaskDelete(statusBarTaskHandle);
+    if (wifiScanTaskHandle != NULL) { vTaskDelete(wifiScanTaskHandle); wifiScanTaskHandle = NULL; }
+    if (uiTaskHandle != NULL) { vTaskDelete(uiTaskHandle); uiTaskHandle = NULL; }
+    if (statusBarTaskHandle != NULL) { vTaskDelete(statusBarTaskHandle); statusBarTaskHandle = NULL; }
     esp_wifi_set_promiscuous(false);
     WiFi.disconnect();
     stopScan = false;

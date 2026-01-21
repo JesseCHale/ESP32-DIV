@@ -80,12 +80,25 @@ int profileCount = 0;
 RCSwitch mySwitch = RCSwitch();
 bool subghz_receive_active = false;  // Flag to track if RCSwitch receive is enabled (for safe cleanup)
 
+// Forward declaration for RMT cleanup
+namespace subbrute {
+    extern bool rmtInitialized;
+}
+
 // Cleanup function for switching FROM SubGHz TO 2.4GHz modes
 void cleanupSubGHz() {
     if (subghz_receive_active) {
         mySwitch.disableReceive();
         subghz_receive_active = false;
     }
+
+    // Clean up RMT driver if it was initialized
+    if (subbrute::rmtInitialized) {
+        rmt_driver_uninstall(RMT_CHANNEL_0);
+        subbrute::rmtInitialized = false;
+        Serial.println("[SubGHz] RMT driver uninstalled");
+    }
+
     ELECHOUSE_cc1101.setSidle();  // Put CC1101 in idle mode
     SPI.end();                     // Release SPI bus
     delay(10);
@@ -558,7 +571,7 @@ void sendSignal() {
     // Fallback to RCSwitch if RMT fails or protocol unknown
     if (!success) {
         Serial.println("[REPLAY] Falling back to RCSwitch");
-        mySwitch.enableTransmit(TX_PIN);
+        mySwitch.enableTransmit(RX_PIN);  // RX_PIN=16=GDO0 is TX data line
         mySwitch.setProtocol(receivedProtocol);
         mySwitch.send(receivedValue, receivedBitLength);
         mySwitch.disableTransmit();
@@ -571,7 +584,7 @@ void sendSignal() {
 
     ELECHOUSE_cc1101.SetRx();
     delay(100);
-    mySwitch.enableReceive(RX_PIN);
+    mySwitch.enableReceive(TX_PIN);  // TX_PIN=26=GDO2 is RX data line
     replayat::subghz_receive_active = true;
 
     delay(500);
@@ -1365,7 +1378,7 @@ void transmitProfile(int index) {
     // Fallback to RCSwitch if RMT fails
     if (!success) {
         Serial.println("[PROFILE-TX] Falling back to RCSwitch");
-        mySwitch.enableTransmit(TX_PIN);
+        mySwitch.enableTransmit(RX_PIN);  // RX_PIN=16=GDO0 is TX data line
         mySwitch.setProtocol(profileToSend.protocol);
         mySwitch.send(profileToSend.value, profileToSend.bitLength);
         mySwitch.disableTransmit();
@@ -1378,7 +1391,7 @@ void transmitProfile(int index) {
 
     ELECHOUSE_cc1101.SetRx();
     delay(100);
-    mySwitch.enableReceive(RX_PIN);
+    mySwitch.enableReceive(TX_PIN);  // TX_PIN=26=GDO2 is RX data line
     replayat::subghz_receive_active = true;
 
     delay(500);
@@ -2536,17 +2549,29 @@ void transmitDeBruijnStream(const ProtocolDef& proto) {
     Serial.flush();
 
     // Send pilot pulse using RMT (hardware-timed)
+    // Handle long pilot LOW (>32767us) by using 2 symbols
     Serial.printf("[DEBUG 11] Pilot: HIGH=%d, LOW=%d\n", proto.pilotHigh, proto.pilotLow);
     Serial.flush();
 
+    int pilotSymbols = 1;
     rmtSymbols[0].level0 = 1;
     rmtSymbols[0].duration0 = proto.pilotHigh;
     rmtSymbols[0].level1 = 0;
-    rmtSymbols[0].duration1 = (proto.pilotLow > 32767) ? 32767 : proto.pilotLow;
+    if (proto.pilotLow > 32767) {
+        // Split long pilot LOW across 2 symbols
+        rmtSymbols[0].duration1 = 32767;
+        rmtSymbols[1].level0 = 0;  // Continue LOW
+        rmtSymbols[1].duration0 = proto.pilotLow - 32767;
+        rmtSymbols[1].level1 = 0;
+        rmtSymbols[1].duration1 = 0;
+        pilotSymbols = 2;
+    } else {
+        rmtSymbols[0].duration1 = proto.pilotLow;
+    }
 
     Serial.println("[DEBUG 12] Calling rmtTransmit for pilot...");
     Serial.flush();
-    rmtTransmit(rmtSymbols, 1);
+    rmtTransmit(rmtSymbols, pilotSymbols);
     Serial.println("[DEBUG 13] Pilot pulse sent!");
     Serial.flush();
 
@@ -2742,11 +2767,21 @@ void runSequentialBrute(const ProtocolDef& proto) {
         // Build RMT symbols for this code: pilot + data bits
         int symbolIdx = 0;
 
-        // Add pilot pulse
+        // Add pilot pulse (handle long pilot LOW >32767us)
         rmtSymbols[symbolIdx].level0 = 1;
         rmtSymbols[symbolIdx].duration0 = proto.pilotHigh;
         rmtSymbols[symbolIdx].level1 = 0;
-        rmtSymbols[symbolIdx].duration1 = (proto.pilotLow > 32767) ? 32767 : proto.pilotLow;
+        if (proto.pilotLow > 32767) {
+            // Split long pilot LOW across 2 symbols
+            rmtSymbols[symbolIdx].duration1 = 32767;
+            symbolIdx++;
+            rmtSymbols[symbolIdx].level0 = 0;  // Continue LOW
+            rmtSymbols[symbolIdx].duration0 = proto.pilotLow - 32767;
+            rmtSymbols[symbolIdx].level1 = 0;
+            rmtSymbols[symbolIdx].duration1 = 0;
+        } else {
+            rmtSymbols[symbolIdx].duration1 = proto.pilotLow;
+        }
         symbolIdx++;
 
         // Add data bits (MSB first)

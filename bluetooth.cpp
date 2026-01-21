@@ -319,6 +319,7 @@ void Beats_Studio_Pro() {
 void Betas_Fit_Pro() {
   device_choice = 0;
   device_index = 15;
+  attack_state = 1;
 }
 
 void Beats_Studio_Buds_Plus() {
@@ -383,9 +384,8 @@ void setAdvertisingData() {
       break;
     default:
       Airpods();
-      break;
-
       updateSpoofer();
+      break;
   }
 }
 

@@ -101,7 +101,7 @@ This edition features a complete visual overhaul:
 - **Skull Menu Icons** — 8 custom 16x16 skull-themed navigation icons
 - **Splash Screen** — Full-screen HaleHound branded startup
 - **Transparent Buttons** — Clean button styling with cyan/magenta borders
-- **Updated Branding** — "v2.0 - FENRIR Edition" and "by HaleHound" on device
+- **Updated Branding** — "v2.0 - HaleHound Edition" displayed on device
 
 ---
 
@@ -158,7 +158,7 @@ flash_windows.bat
 
 ## Bug Fixes (22 Total)
 
-### Original FENRIR Fixes (17)
+### Original Fixes (17)
 
 | Priority | Fix |
 |----------|-----|

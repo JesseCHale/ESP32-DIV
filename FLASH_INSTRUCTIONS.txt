@@ -124,7 +124,7 @@ VISUAL OVERHAUL:
   - Transparent buttons with cyan/magenta borders
 
 22 BUG FIXES:
-  - 17 original FENRIR fixes (buffer overflows, modulation, underflows)
+  - 17 original fixes (buffer overflows, modulation, underflows)
   - 5 HaleHound fixes (CC1101 TX/RX swap, RMT truncation, task crashes)
 
 STABILITY:

@@ -4,6 +4,12 @@
 #include "utils.h"
 #include "subconfig.h"  // For cleanupSubGHz() and subghz_receive_active
 
+// ═══════════════════════════════════════════════════════════════════════════
+// NRF24 Cleanup - GPIO 5 shared between NRF24 CSN_PIN_3 and SD Card CS
+// ═══════════════════════════════════════════════════════════════════════════
+// Call this BEFORE any SD card operations to release GPIO 5 from NRF24
+void cleanupNRF24();
+
 #include <TFT_eSPI.h> 
 #include <PCF8574.h>
 #include <XPT2046_Touchscreen.h>

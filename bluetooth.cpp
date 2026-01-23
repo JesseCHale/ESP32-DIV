@@ -1,4 +1,8 @@
 #include "bleconfig.h"
+
+// Forward declaration - cleanupSD() defined in wifi.cpp
+// Don't include wificonfig.h here - it has "using namespace std;" which breaks map()
+extern void cleanupSD();
 #include "shared.h"
 #include "icon.h"
 #include "Touchscreen.h"
@@ -9,6 +13,33 @@
 namespace replayat {
     extern RCSwitch mySwitch;
     extern bool subghz_receive_active;  // Flag to check if RCSwitch receive is enabled
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// NRF24 Cleanup - Release GPIO 5 for SD Card
+// ═══════════════════════════════════════════════════════════════════════════
+// GPIO 5 is shared between NRF24 radio3 CSN and SD Card CS.
+// This function releases GPIO 5 so SD card operations can use it.
+// Call this BEFORE SD.begin() or any SD card operations.
+// ═══════════════════════════════════════════════════════════════════════════
+void cleanupNRF24() {
+    // End SPI to release the bus (NRF24 and SD share SPI)
+    SPI.end();
+    delay(10);
+
+    // Release GPIO 5 (CSN_PIN_3) - set to INPUT so SD can take it
+    pinMode(5, INPUT);
+
+    // Also release radio3's CE pin (GPIO 4) to be safe
+    pinMode(4, INPUT);
+
+    // Deselect radio1 and radio2 CSN pins to prevent SPI conflicts
+    pinMode(17, OUTPUT);
+    digitalWrite(17, HIGH);  // CSN_PIN_1 HIGH = deselected
+    pinMode(27, OUTPUT);
+    digitalWrite(27, HIGH);  // CSN_PIN_2 HIGH = deselected
+
+    Serial.println("[NRF24] Cleanup complete - GPIO 5 released for SD card");
 }
 
 /*
@@ -983,6 +1014,9 @@ void configureRadio(RF24 &radio, const byte* channels, size_t size) {
 }
 
 void initializeRadiosMultiMode() {
+  // Release GPIO 5 from SD card before radio3 init (pin conflict resolution)
+  cleanupSD();
+
   bool radio1Active = false;
   bool radio2Active = false;
   bool radio3Active = false;
@@ -1175,7 +1209,7 @@ namespace BleScan {
 #define ICON_SIZE 16
 #define ICON_NUM 2
 
-BLEScan* bleScan;
+BLEScan* bleScan = nullptr;
 BLEScanResults bleResults;
 bool isScanning = false;
 bool isDetailView = false;
@@ -1321,7 +1355,6 @@ void updateBLEList() {
 }
 
 void displayBLEDetails() {
-
   tft.fillRect(0, 37, 240, 320, TFT_BLACK);
   tft.fillRect(35, 20, 105, 16, DARK_GRAY);
   tft.setTextColor(SHREDDY_TEAL);
@@ -1443,7 +1476,6 @@ void runUI() {
 }
 
 void bleScanSetup() {
-
   tft.setRotation(0);
   tft.fillScreen(TFT_BLACK);
   tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
@@ -1917,6 +1949,9 @@ void scannerSetup() {
   SPI.setFrequency(10000000);
   SPI.setBitOrder(MSBFIRST);
 
+  // Reinitialize touch SPI after reconfiguring main SPI bus
+  setupTouchscreen();
+
   pinMode(CE, OUTPUT);
   pinMode(CSN, OUTPUT);
   pinMode(BUTTON, INPUT_PULLUP);
@@ -1937,6 +1972,8 @@ void scannerLoop() {
     if (isSelectButtonPressed()) {
       scanning = false;
       Print("Scanner stopped by user", TFT_YELLOW, true);
+      // Reinitialize touch SPI before exiting - NRF24 reconfigured SPI bus
+      setupTouchscreen();
       break;
     }
     runUI();
@@ -2246,6 +2283,10 @@ void analyzerSetup() {
     SPI.setFrequency(10000000);
     SPI.setBitOrder(MSBFIRST);
 
+    // Reinitialize touch SPI after reconfiguring main SPI bus
+    // Touch uses separate VSPI pins (32/35/25/33) but shares the VSPI peripheral
+    setupTouchscreen();
+
     pinMode(ANA_CE, OUTPUT);
     pinMode(ANA_CSN, OUTPUT);
 
@@ -2269,6 +2310,8 @@ void analyzerLoop() {
     if (pcf.digitalRead(BTN_SELECT) == LOW) {
         analyzerRunning = false;
         feature_exit_requested = true;
+        // Reinitialize touch SPI before exiting - NRF24 reconfigured SPI bus
+        setupTouchscreen();
         delay(200);
         return;
     }
@@ -2837,6 +2880,9 @@ void wlanjammerSetup() {
     SPI.setFrequency(10000000);
     SPI.setBitOrder(MSBFIRST);
 
+    // Reinitialize touch SPI after reconfiguring main SPI bus
+    setupTouchscreen();
+
     // Initialize radio pins
     pinMode(WLAN_CE, OUTPUT);
     pinMode(WLAN_CSN, OUTPUT);
@@ -2875,6 +2921,9 @@ void wlanjammerSetup() {
     SPI.setFrequency(10000000);
     SPI.setBitOrder(MSBFIRST);
 
+    // Reinitialize touch SPI after reconfiguring main SPI bus
+    setupTouchscreen();
+
     // CE=16, CSN=17 - same pins, same functions!
     pinMode(CE, OUTPUT);   // Scanner uses CE (pin 16)
     pinMode(CSN, OUTPUT);  // Scanner uses CSN (pin 17)
@@ -2910,6 +2959,8 @@ void wlanjammerLoop() {
             stopJamming();
         }
         feature_exit_requested = true;
+        // Reinitialize touch SPI before exiting - NRF24 reconfigured SPI bus
+        setupTouchscreen();
         delay(200);
         return;
     }
@@ -3082,6 +3133,9 @@ void configureRadio(RF24 &radio, const byte* channels, size_t size) {
 }
 
 void initializeRadiosMultiMode() {
+  // Release GPIO 5 from SD card before radio3 init (pin conflict resolution)
+  cleanupSD();
+
   bool radio1Active = false;
   bool radio2Active = false;
   bool radio3Active = false;

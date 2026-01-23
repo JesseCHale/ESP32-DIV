@@ -4,6 +4,12 @@
 #include "arduinoFFT.h"
 #include "utils.h"
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SD Card Cleanup - GPIO 5 shared between SD Card CS and NRF24 CSN_PIN_3
+// ═══════════════════════════════════════════════════════════════════════════
+// Call this BEFORE any NRF24 radio3 operations to release GPIO 5 from SD
+void cleanupSD();
+
 #include <WiFi.h>
 #include <TFT_eSPI.h> 
 #include <PCF8574.h>

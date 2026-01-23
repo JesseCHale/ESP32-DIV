@@ -1,7 +1,28 @@
 #include "wificonfig.h"
+
+// Forward declaration - cleanupNRF24() defined in bluetooth.cpp
+// Don't include bleconfig.h here - cross-include causes compilation issues
+extern void cleanupNRF24();
 #include "shared.h"
 #include "icon.h"
 #include "Touchscreen.h"
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SD Card Cleanup - Release GPIO 5 for NRF24 radio3
+// ═══════════════════════════════════════════════════════════════════════════
+// GPIO 5 is shared between SD Card CS and NRF24 radio3 CSN.
+// This function releases GPIO 5 so NRF24 operations can use it.
+// Call this BEFORE radio3.begin() or any 2.4GHz jamming operations.
+// ═══════════════════════════════════════════════════════════════════════════
+void cleanupSD() {
+    SD.end();  // Close SD card, release file handles
+    delay(10);
+
+    // Release GPIO 5 (SD_CS_PIN) - set to INPUT so NRF24 can take it
+    pinMode(5, INPUT);
+
+    Serial.println("[SD] Cleanup complete - GPIO 5 released for NRF24");
+}
 
 /*
    PacketMonitor
@@ -2625,6 +2646,7 @@ void drawTabBar(const char* leftButton, bool leftDisabled, const char* prevButto
 void drawScanScreen() {
     tft.drawLine(0, 19, 240, 19, SHREDDY_TEAL);
     tft.fillRect(0, 37, 240, 320, TFT_BLACK);
+    tft.setTextFont(1);
     tft.setTextSize(1);
 
     if (scanning) {
@@ -3783,6 +3805,9 @@ void performSDUpdate() {
       delay(50);
     }
 
+    // Release GPIO 5 from NRF24 before SD card init (pin conflict resolution)
+    cleanupNRF24();
+
     tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
     tft.setCursor(10, 30 + yshift);
     tft.println("Initializing SD...");
@@ -4055,6 +4080,7 @@ void drawNetworkList(int startIndex, int numNetworks, NetworkInfo* networks, int
   uiDrawn = false;
   tft.drawLine(0, 19, 240, 19, SHREDDY_TEAL);
   tft.fillRect(0, 37, 240, 320, TFT_BLACK);
+  tft.setTextFont(1);
   tft.setTextSize(1);
 
   if (numNetworks == 0) {

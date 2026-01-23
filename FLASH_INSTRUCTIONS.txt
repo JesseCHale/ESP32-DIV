@@ -1,38 +1,5 @@
-```
-                            .......::.:....
-                       ..::------------------::..
-                     .:-=======================-::.
-                   .:---====================-----::.
-                 .:::::::-----=-----=--=---:::::::...
-               ....:::::----====-=--====--------:::...
-               ...::------::---=========--::::::--::.
-               ....:::........:.:::::::..........:::.
-                .....      ........::..      ...   ..
-                . .            ..::....       ...
-                             ...::.   ...
-                  ..         .::.      ...          .
-                 .:..     ......        .....      ....
-              ... .:...........      .    .   .....::.
-              ........  ..   ...       .....  ..........
-                            .....      .....   ...
-                             ...... .......
-                          ...::.........:::.
-                         ....... ....:......
-                         ....     .  ....
-
-  ██░ ██  ▄▄▄       ██▓    ▓█████     ██░ ██  ▒█████   █    ██  ███▄    █ ▓█████▄
- ▓██░ ██▒▒████▄    ▓██▒    ▓█   ▀    ▓██░ ██▒▒██▒  ██▒ ██  ▓██▒ ██ ▀█   █ ▒██▀ ██▌
- ▒██▀▀██░▒██  ▀█▄  ▒██░    ▒███      ▒██▀▀██░▒██░  ██▒▓██  ▒██░▓██  ▀█ ██▒░██   █▌
- ░▓█ ░██ ░██▄▄▄▄██ ▒██░    ▒▓█  ▄    ░▓█ ░██ ▒██   ██░▓▓█  ░██░▓██▒  ▐▌██▒░▓█▄   ▌
- ░▓█▒░██▓ ▓█   ▓██▒░██████▒░▒████▒   ░▓█▒░██▓░ ████▓▒░▒▒█████▓ ▒██░   ▓██░░▒████▓
-  ▒ ░░▒░▒ ▒▒   ▓▒█░░ ▒░▓  ░░░ ▒░ ░    ▒ ░░▒░▒░ ▒░▒░▒░ ░▒▓▒ ▒ ▒ ░ ▒░   ▒ ▒  ▒▒▓  ▒
-  ▒ ░▒░ ░  ▒   ▒▒ ░░ ░ ▒  ░ ░ ░  ░    ▒ ░▒░ ░  ░ ▒ ▒░ ░░▒░ ░ ░ ░ ░░   ░ ▒░ ░ ▒  ▒
-  ░  ░░ ░  ░   ▒     ░ ░      ░       ░  ░░ ░░ ░ ░ ▒   ░░░ ░ ░    ░   ░ ░  ░ ░  ░
-  ░  ░  ░      ░  ░    ░  ░   ░  ░    ░  ░  ░    ░ ░     ░              ░    ░
-```
-
 ================================================================================
-              ESP32-DIV v2.0 HALEHOUND EDITION - READY TO FLASH
+              ESP32-DIV v2.1 HaleHound Edition - READY TO FLASH
 ================================================================================
 
 This package contains pre-compiled firmware ready to flash directly to your
@@ -96,41 +63,12 @@ MAC / LINUX:
      0x10000 ESP32-DIV.bin
 
 ================================================================================
-                    OPTION 3: FLASH SCRIPTS
+                    OPTION 3: ARDUINO IDE
 ================================================================================
 
-macOS:
-------
-chmod +x flash_mac.sh
-./flash_mac.sh
-
-Linux:
-------
-chmod +x flash_linux.sh
-./flash_linux.sh
-
-Windows:
---------
-flash_windows.bat
-
-================================================================================
-                    WHAT'S NEW IN HALEHOUND EDITION
-================================================================================
-
-VISUAL OVERHAUL:
-  - Custom magenta (#FF5EF2) and cyan (#00CFFF) color theme
-  - 8 custom skull-themed navigation icons
-  - Full-screen HaleHound branded splash screen
-  - Transparent buttons with cyan/magenta borders
-
-22 BUG FIXES:
-  - 17 original fixes (buffer overflows, modulation, underflows)
-  - 5 HaleHound fixes (CC1101 TX/RX swap, RMT truncation, task crashes)
-
-STABILITY:
-  - 46 button debounce loops added
-  - 16 recursive calls eliminated
-  - Proper RMT driver cleanup
+1. Open Arduino IDE
+2. Go to: Sketch > Export Compiled Binary (but we already did this for you!)
+3. Or use: Tools > ESP32 Sketch Data Upload with the .bin files
 
 ================================================================================
                          TROUBLESHOOTING
@@ -149,7 +87,7 @@ STABILITY:
 
 After flashing:
   - Press RESET button or unplug/replug USB
-  - Device should show HaleHound splash screen
+  - Device should show ESP32-DIV logo on screen
 
 ================================================================================
                             FLASH ADDRESSES
@@ -165,10 +103,6 @@ Address    Size       Description
 Total: ~2MB of 4MB flash used
 
 ================================================================================
-                    ESP32-DIV v2.0 HaleHound Edition
-                              by JMFH
-                           January 2026
-          https://github.com/JesseCHale/ESP32-DIV
-================================================================================
-                   For authorized security research only.
+                    ESP32-DIV v2.1 HaleHound Edition - January 2026
+                              HaleHound Security
 ================================================================================

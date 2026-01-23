@@ -80,16 +80,18 @@ int profileCount = 0;
 RCSwitch mySwitch = RCSwitch();
 bool subghz_receive_active = false;  // Flag to track if RCSwitch receive is enabled (for safe cleanup)
 
+}  // Close replayat namespace temporarily for global cleanupSubGHz function
+
 // Forward declaration for RMT cleanup
 namespace subbrute {
     extern bool rmtInitialized;
 }
 
-// Cleanup function for switching FROM SubGHz TO 2.4GHz modes
+// Cleanup function for switching FROM SubGHz TO 2.4GHz modes (global scope to match header declaration)
 void cleanupSubGHz() {
-    if (subghz_receive_active) {
-        mySwitch.disableReceive();
-        subghz_receive_active = false;
+    if (replayat::subghz_receive_active) {
+        replayat::mySwitch.disableReceive();
+        replayat::subghz_receive_active = false;
     }
 
     // Clean up RMT driver if it was initialized
@@ -108,6 +110,8 @@ void cleanupSubGHz() {
     pinMode(26, INPUT);            // Release GDO2/TX pin
     Serial.println("[SubGHz] Cleanup complete - radios released for 2.4GHz");
 }
+
+namespace replayat {  // Reopen replayat namespace
 
 arduinoFFT FFTSUB = arduinoFFT();
 
@@ -817,13 +821,16 @@ void runUI() {
                     break;
                 case 4: // Back icon action (exit to submenu)
                     feature_exit_requested = true;
+                    // Release CC1101 HSPI then reinitialize touch on HSPI
+                    cleanupSubGHz();
+                    setupTouchscreen();
                     break;
             }
         } else if (animationState == 2) {
             animationState = 0;
             activeIcon = -1;
         }
-        lastAnimationTime = millis();  
+        lastAnimationTime = millis();
     }
 
     static unsigned long lastTouchCheck = 0;
@@ -1530,6 +1537,9 @@ void runUI() {
                     break;
                 case 4: // Back icon (exit to submenu)
                     feature_exit_requested = true;
+                    // Release CC1101 HSPI then reinitialize touch on HSPI
+                    cleanupSubGHz();
+                    setupTouchscreen();
                     break;
             }
         } else if (animationState == 2) {
@@ -1858,13 +1868,16 @@ void runUI() {
                     break;
                 case 5: // Back icon action (exit to submenu)
                     feature_exit_requested = true;
+                    // Release CC1101 HSPI then reinitialize touch on HSPI
+                    cleanupSubGHz();
+                    setupTouchscreen();
                     break;
             }
         } else if (animationState == 2) {
             animationState = 0;
             activeIcon = -1;
         }
-        lastAnimationTime = millis();  
+        lastAnimationTime = millis();
     }
 
     static unsigned long lastTouchCheck = 0;
@@ -3117,6 +3130,9 @@ void runUI() {
 
                 case 4: // Back
                     feature_exit_requested = true;
+                    // Release CC1101 HSPI then reinitialize touch on HSPI
+                    cleanupSubGHz();
+                    setupTouchscreen();
                     break;
             }
         } else if (animationState == 2) {
@@ -3181,7 +3197,7 @@ void subBruteSetup() {
         Serial.println("[ERROR] RMT init failed - falling back to software timing");
     }
 
-    bruteSwitch.enableTransmit(TX_PIN);
+    bruteSwitch.enableTransmit(RX_PIN);  // RX_PIN=16=GDO0 is TX data line
 
     pcf.pinMode(BTN_LEFT, INPUT_PULLUP);
     pcf.pinMode(BTN_RIGHT, INPUT_PULLUP);

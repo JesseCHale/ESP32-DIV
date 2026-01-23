@@ -2162,9 +2162,11 @@ void displayDeviceInfo() {
 
     tft.setCursor(10, y); tft.print("Device: ESP32-DIV");
     y += 25;
-    tft.setCursor(10, y); tft.print("Version: 1.1.0-mod");
+    tft.setCursor(10, y); tft.print("Version: v2.1 - HaleHound");
     y += 25;
-    tft.setCursor(10, y); tft.print("By: CiferTech");
+    tft.setCursor(10, y); tft.print("By: HaleHound (JMFH)");
+    y += 25;
+    tft.setCursor(10, y); tft.print("Original: CiferTech");
     y += 25;
     tft.setCursor(10, y); tft.printf("Free Heap: %d", ESP.getFreeHeap());
     y += 25;
@@ -2772,7 +2774,7 @@ void handleIRSubmenuButtons() {
 
 void handleAboutPage() {
 
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.setTextColor(TFT_RED, TFT_BLACK);
   tft.setTextSize(1);
   tft.setTextFont(2);
   
@@ -2784,22 +2786,19 @@ void handleAboutPage() {
   int text_x = 10;
   int text_y = 130;
   tft.setCursor(text_x, text_y);
-  tft.println("- ESP32-DIV");
+  tft.println("- ESP32-DIV v2.1");
   text_y += lineHeight;
   tft.setCursor(text_x, text_y);
-  tft.println("- Developed by: CiferTech");
+  tft.println("- HaleHound Edition");
   text_y += lineHeight;
   tft.setCursor(text_x, text_y);
-  tft.println("- Version: 1.1.0");
+  tft.println("- By: JMFH");
   text_y += lineHeight;
   tft.setCursor(text_x, text_y);
-  tft.println("- Contact: cifertech@gmail.com");
+  tft.println("- Original: CiferTech");
   text_y += lineHeight;
   tft.setCursor(text_x, text_y);
-  tft.println("- GitHub: github.com/cifertech");
-  text_y += lineHeight;
-  tft.setCursor(text_x, text_y);
-  tft.println("- Website: CiferTech.net");
+  tft.println("- GitHub: github.com/JesseCHale");
   text_y += lineHeight;
 
 
@@ -2971,11 +2970,11 @@ void handleButtons() {
 
         if (ts.touched() && !feature_active && (millis() - lastTouchTime >= touchFeedbackDelay)) {
             TS_Point p = ts.getPoint();
-            delay(10); 
+            delay(10);
 
             int x, y;
             x = ::map(p.x, TS_MINX, TS_MAXX, 0, 239);
-            y = ::map(p.y, TS_MAXY, TS_MINY, 0, 319); 
+            y = ::map(p.y, TS_MAXY, TS_MINY, 0, 319);
 
             for (int i = 0; i < NUM_MENU_ITEMS; i++) {
                 int column = i / 4; 

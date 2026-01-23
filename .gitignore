@@ -1,4 +1,9 @@
 .DS_Store
+._.DS_Store
+._*
 *.swp
 *.swo
 *~
+*.elf
+*.map
+*.backup

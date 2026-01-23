@@ -32,7 +32,7 @@
 ```
 
 ================================================================================
-                         ESP32-DIV FIRMWARE v2.0
+                         ESP32-DIV FIRMWARE v2.1
                           HALEHOUND EDITION
                               by JMFH
                            January 2026
@@ -246,7 +246,7 @@ This edition features a complete visual overhaul:
 - Skull Menu Icons: 8 custom 16x16 skull-themed navigation icons
 - Splash Screen: Full-screen HaleHound branded startup
 - Transparent Buttons: Clean button styling with cyan/magenta borders
-- Updated Branding: "v2.0 - HaleHound Edition" displayed on device
+- Updated Branding: "v2.1 - HaleHound Edition" displayed on device
 
 ================================================================================
                     UI/UX IMPROVEMENTS
@@ -261,7 +261,7 @@ This edition features a complete visual overhaul:
 - Icon-based navigation
 
 ================================================================================
-                         BUG FIXES (22 Total)
+                         BUG FIXES (27 Total)
 ================================================================================
 
 ORIGINAL FIXES (17):
@@ -289,7 +289,7 @@ LOW PRIORITY (5):
   3. wificonfig.h       - Duplicate includes removed (3)
   4. bleconfig.h        - Duplicate esp_bt.h include removed
 
-HALEHOUND EDITION FIXES (5):
+HALEHOUND EDITION FIXES (10):
 ----------------------------
 
 1. Assignment vs Comparison Bug (wifi.cpp:765)

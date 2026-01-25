@@ -358,6 +358,47 @@ flash_windows.bat
 
 ---
 
+## CRITICAL: TFT_eSPI Library Configuration
+
+**If you get a WHITE SCREEN after flashing, this is the fix!**
+
+The TFT_eSPI library requires a `User_Setup.h` file with the correct ESP32-DIV pin configuration. The default library config is for ESP8266 and WILL NOT WORK.
+
+### Fix (Required Before Compiling)
+
+1. Copy `User_Setup.h` from this repo to your TFT_eSPI library folder:
+
+**macOS:**
+```bash
+cp User_Setup.h ~/Documents/Arduino/libraries/TFT_eSPI/User_Setup.h
+```
+
+**Linux:**
+```bash
+cp User_Setup.h ~/Arduino/libraries/TFT_eSPI/User_Setup.h
+```
+
+**Windows:**
+```batch
+copy User_Setup.h %USERPROFILE%\Documents\Arduino\libraries\TFT_eSPI\User_Setup.h
+```
+
+2. Recompile and flash the firmware.
+
+### ESP32-DIV Pin Configuration (in User_Setup.h)
+```cpp
+#define TFT_MISO 12
+#define TFT_MOSI 13
+#define TFT_SCLK 14
+#define TFT_CS   15
+#define TFT_DC    2
+#define TFT_RST   0
+#define TFT_BL    4
+#define USE_HSPI_PORT
+```
+
+---
+
 ## Build From Source
 
 ```bash
@@ -369,7 +410,7 @@ arduino-cli compile --fqbn esp32:esp32:esp32:PartitionScheme=huge_app .
 ```
 
 ### Required Libraries
-- TFT_eSPI (ILI9341)
+- TFT_eSPI (ILI9341) — **MUST configure User_Setup.h first!**
 - XPT2046_Touchscreen
 - PCF8574
 - RF24

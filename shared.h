@@ -3,7 +3,7 @@
 
 // ========== HALEHOUND COLOR PALETTE ==========
 // Primary colors
-const uint16_t HALEHOUND_MAGENTA = 0xFAFE;  // #FF5EF2 - Primary (THE color)
+const uint16_t HALEHOUND_MAGENTA = 0xFB20;  // Orange-Red - Primary (selected items)
 const uint16_t HALEHOUND_HOTPINK = 0xF8EA;  // #FF1C52 - Accents
 const uint16_t HALEHOUND_BRIGHT = 0xFC9F;   // #FF90FF - Highlights
 const uint16_t HALEHOUND_VIOLET = 0xF9FF;   // #FE3CFF - Purple tones

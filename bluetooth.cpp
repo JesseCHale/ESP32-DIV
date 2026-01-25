@@ -1988,8 +1988,11 @@ void scannerLoop() {
 
 
 /*
+ * 2.4GHz Spectrum Analyzer - Real-time visualization with WATERFALL
+ * HaleHound v2.1 - Jesse Hale
  *
- * 2.4GHz Spectrum Analyzer - Real-time visualization
+ * WATERFALL DISPLAY: Scrolling history below spectrum bars
+ * Same teal-to-magenta gradient as the bars
  *
 */
 
@@ -2006,6 +2009,21 @@ unsigned long lastScanTime = 0;
 unsigned long lastDisplayTime = 0;
 bool analyzerRunning = true;
 
+// ═══════════════════════════════════════════════════════════════════════════
+// WATERFALL CONFIGURATION
+// ═══════════════════════════════════════════════════════════════════════════
+#define WATERFALL_HEIGHT 100      // Waterfall area height in pixels
+#define WATERFALL_Y 215           // Waterfall starts below spectrum (after axes/labels)
+
+// Waterfall history buffer - stores signal levels for each row
+// Each row = one scan, scrolls down over time
+uint8_t waterfall_buffer[WATERFALL_HEIGHT][ANA_CHANNELS];
+int waterfall_row = 0;            // Current row being written to (circular buffer index)
+bool waterfall_initialized = false;
+
+// Color palette for waterfall (128 colors from black through teal to magenta)
+uint16_t waterfall_palette[64];
+
 // WiFi channel positions (NRF24 channel numbers)
 // WiFi Ch 1 = 2412 MHz = NRF Ch 12
 // WiFi Ch 6 = 2437 MHz = NRF Ch 37
@@ -2014,11 +2032,11 @@ const int WIFI_CH1 = 12;
 const int WIFI_CH6 = 37;
 const int WIFI_CH11 = 62;
 
-// Display constants - GRAPH IN MIDDLE OF SCREEN
+// Display constants - SPECTRUM GRAPH (upper portion)
 #define GRAPH_X 10
-#define GRAPH_Y 40          // Start near top
+#define GRAPH_Y 50              // Start after header
 #define GRAPH_WIDTH 220
-#define GRAPH_HEIGHT 160    // End at Y=200 (middle of screen)
+#define GRAPH_HEIGHT 120        // Reduced to make room for waterfall
 #define BAR_WIDTH 1
 
 // NRF24 register definitions (same as Scanner)
@@ -2067,70 +2085,171 @@ bool anaCarrierDetected() {
     return anaGetRegister(_ANA_NRF24_RPD) & 0x01;
 }
 
-// Get color based on signal level (0-50 typical range)
-uint16_t getSignalColor(uint8_t level) {
-    if (level == 0) return TFT_DARKGREY;
-    if (level < 5) return TFT_BLUE;
-    if (level < 15) return TFT_CYAN;
-    if (level < 25) return TFT_GREEN;
-    if (level < 35) return TFT_YELLOW;
-    if (level < 45) return ORANGE;
-    return TFT_RED;
+// ═══════════════════════════════════════════════════════════════════════════
+// WATERFALL WITH MAGENTA -> TEAL VERTICAL GRADIENT
+// Top of waterfall = Magenta/Pink (#FF16A0)
+// Bottom of waterfall = Cyan/Teal (#23D2C3)
+// Dots shift color as they scroll down - LOOKS RAD AS FUCK
+// ═══════════════════════════════════════════════════════════════════════════
+
+void initWaterfallPalette() {
+    // No longer using palette - colors calculated per-pixel based on position
+    waterfall_initialized = true;
 }
 
+// Get gradient color based on vertical position
+// Top (row 0) = Magenta, Bottom (row max) = Cyan
+// Signal strength adjusts brightness
+uint16_t getGradientWaterfallColor(uint8_t level, int row, int maxRows) {
+    if (level == 0) return TFT_BLACK;
+
+    // Calculate vertical position ratio (0.0 = top, 1.0 = bottom)
+    float vRatio = (float)row / (float)(maxRows - 1);
+
+    // Top color: Magenta/Pink - RGB(255, 22, 160)
+    // Bottom color: Cyan - RGB(0, 255, 255)
+    uint8_t r = 255 - (uint8_t)(vRatio * 255);    // 255 -> 0
+    uint8_t g = 22 + (uint8_t)(vRatio * 233);     // 22 -> 255
+    uint8_t b = 160 + (uint8_t)(vRatio * 95);     // 160 -> 255
+
+    // Adjust brightness based on signal level (1-30 typical range)
+    // Weak signals = dimmer, strong signals = full bright
+    float brightness;
+    if (level < 3) {
+        brightness = 0.4f + (level * 0.1f);  // 0.5 - 0.7
+    } else if (level < 10) {
+        brightness = 0.7f + ((level - 3) * 0.03f);  // 0.7 - 0.91
+    } else {
+        brightness = 0.91f + ((level - 10) * 0.009f);  // 0.91 - 1.0
+        if (brightness > 1.0f) brightness = 1.0f;
+    }
+
+    r = (uint8_t)(r * brightness);
+    g = (uint8_t)(g * brightness);
+    b = (uint8_t)(b * brightness);
+
+    // Convert to RGB565
+    return ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// WATERFALL DRAWING
+// ═══════════════════════════════════════════════════════════════════════════
+void updateWaterfall() {
+    // Store current scan data into waterfall buffer at current row
+    for (int ch = 0; ch < ANA_CHANNELS; ch++) {
+        waterfall_buffer[waterfall_row][ch] = current_levels[ch];
+    }
+
+    // Advance to next row (circular buffer)
+    waterfall_row++;
+    if (waterfall_row >= WATERFALL_HEIGHT) {
+        waterfall_row = 0;
+    }
+}
+
+void drawWaterfall() {
+    // Clear waterfall area to black
+    tft.fillRect(GRAPH_X, WATERFALL_Y, GRAPH_WIDTH, WATERFALL_HEIGHT, TFT_BLACK);
+
+    // Draw waterfall - newest at top (magenta), oldest at bottom (cyan)
+    int screenY = WATERFALL_Y;  // Start at TOP
+    int bufferIdx = waterfall_row - 1;  // Most recent data
+    if (bufferIdx < 0) bufferIdx = WATERFALL_HEIGHT - 1;
+
+    for (int row = 0; row < WATERFALL_HEIGHT; row++) {
+        for (int ch = 0; ch < ANA_CHANNELS; ch++) {
+            uint8_t level = waterfall_buffer[bufferIdx][ch];
+
+            // Only draw if signal exists
+            if (level > 0) {
+                int x = GRAPH_X + (ch * GRAPH_WIDTH / ANA_CHANNELS);
+                uint16_t color = getGradientWaterfallColor(level, row, WATERFALL_HEIGHT);
+                tft.drawPixel(x, screenY, color);
+            }
+        }
+
+        screenY++;  // Move down on screen
+        bufferIdx--;  // Move backward in buffer (older data)
+        if (bufferIdx < 0) {
+            bufferIdx = WATERFALL_HEIGHT - 1;
+        }
+    }
+}
+
+void clearWaterfallBuffer() {
+    memset(waterfall_buffer, 0, sizeof(waterfall_buffer));
+    waterfall_row = 0;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// EXISTING FUNCTIONS (MODIFIED FOR NEW LAYOUT)
+// ═══════════════════════════════════════════════════════════════════════════
+
 void drawWiFiMarkers() {
-    // Draw vertical lines for WiFi channels
+    // Draw vertical lines for WiFi channels on spectrum
     int x1 = GRAPH_X + (WIFI_CH1 * GRAPH_WIDTH / ANA_CHANNELS);
     int x6 = GRAPH_X + (WIFI_CH6 * GRAPH_WIDTH / ANA_CHANNELS);
     int x11 = GRAPH_X + (WIFI_CH11 * GRAPH_WIDTH / ANA_CHANNELS);
 
-    // Draw dashed lines
+    // Draw dashed lines on spectrum
     for (int y = GRAPH_Y; y < GRAPH_Y + GRAPH_HEIGHT; y += 4) {
         tft.drawPixel(x1, y, TFT_MAGENTA);
         tft.drawPixel(x6, y, TFT_MAGENTA);
         tft.drawPixel(x11, y, TFT_MAGENTA);
     }
 
-    // Labels
+    // Also draw on waterfall area
+    for (int y = WATERFALL_Y; y < WATERFALL_Y + WATERFALL_HEIGHT; y += 6) {
+        tft.drawPixel(x1, y, TFT_DARKGREY);
+        tft.drawPixel(x6, y, TFT_DARKGREY);
+        tft.drawPixel(x11, y, TFT_DARKGREY);
+    }
+
+    // Labels above spectrum
     tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
     tft.setTextSize(1);
-    tft.setCursor(x1 - 4, GRAPH_Y - 12);
+    tft.setCursor(x1 - 4, GRAPH_Y - 10);
     tft.print("1");
-    tft.setCursor(x6 - 4, GRAPH_Y - 12);
+    tft.setCursor(x6 - 4, GRAPH_Y - 10);
     tft.print("6");
-    tft.setCursor(x11 - 8, GRAPH_Y - 12);
+    tft.setCursor(x11 - 8, GRAPH_Y - 10);
     tft.print("11");
 }
 
 void drawAxes() {
-    // Y-axis
+    // Y-axis for spectrum
     tft.drawLine(GRAPH_X - 2, GRAPH_Y, GRAPH_X - 2, GRAPH_Y + GRAPH_HEIGHT, SHREDDY_TEAL);
-    // X-axis
+    // X-axis for spectrum
     tft.drawLine(GRAPH_X, GRAPH_Y + GRAPH_HEIGHT, GRAPH_X + GRAPH_WIDTH, GRAPH_Y + GRAPH_HEIGHT, SHREDDY_TEAL);
 
-    // Frequency labels
+    // Frequency labels between spectrum and waterfall
     tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
     tft.setTextSize(1);
-    tft.setCursor(GRAPH_X - 5, GRAPH_Y + GRAPH_HEIGHT + 5);
+    tft.setCursor(GRAPH_X - 5, GRAPH_Y + GRAPH_HEIGHT + 3);
     tft.print("2400");
-    tft.setCursor(GRAPH_X + GRAPH_WIDTH/2 - 15, GRAPH_Y + GRAPH_HEIGHT + 5);
+    tft.setCursor(GRAPH_X + GRAPH_WIDTH/2 - 15, GRAPH_Y + GRAPH_HEIGHT + 3);
     tft.print("2462");
-    tft.setCursor(GRAPH_X + GRAPH_WIDTH - 25, GRAPH_Y + GRAPH_HEIGHT + 5);
+    tft.setCursor(GRAPH_X + GRAPH_WIDTH - 25, GRAPH_Y + GRAPH_HEIGHT + 3);
     tft.print("2525");
 
-    // MHz label
-    tft.setCursor(GRAPH_X + GRAPH_WIDTH/2 - 10, GRAPH_Y + GRAPH_HEIGHT + 18);
-    tft.print("MHz");
+    // Divider line before waterfall
+    tft.drawLine(0, WATERFALL_Y - 2, 240, WATERFALL_Y - 2, ORANGE);
+
+    // Waterfall label
+    tft.setTextColor(ORANGE, TFT_BLACK);
+    tft.setCursor(85, WATERFALL_Y + WATERFALL_HEIGHT + 2);
+    tft.print("WATERFALL");
 }
 
 void drawSpectrum() {
-    // Clear graph area only
+    // Clear spectrum graph area only (not waterfall)
     tft.fillRect(GRAPH_X, GRAPH_Y, GRAPH_WIDTH, GRAPH_HEIGHT, TFT_BLACK);
 
     // Draw WiFi channel markers first (behind bars)
     drawWiFiMarkers();
 
-    // Find max for normalization
+    // Find max for scaling reference
     uint8_t maxLevel = 1;
     for (int i = 0; i < ANA_CHANNELS; i++) {
         if (current_levels[i] > maxLevel) maxLevel = current_levels[i];
@@ -2140,13 +2259,13 @@ void drawSpectrum() {
     for (int i = 0; i < ANA_CHANNELS; i++) {
         int x = GRAPH_X + (i * GRAPH_WIDTH / ANA_CHANNELS);
 
-        // Current level bar - INCREASED SCALING (was /50, now /8 for 6x taller bars)
+        // Current level bar - scaled to visible range
         int barHeight = (current_levels[i] * GRAPH_HEIGHT) / 8;
-        if (barHeight < 4 && current_levels[i] > 0) barHeight = 4;  // Minimum visible
+        if (barHeight < 3 && current_levels[i] > 0) barHeight = 3;  // Minimum visible
         if (barHeight > GRAPH_HEIGHT) barHeight = GRAPH_HEIGHT;
 
         if (barHeight > 0) {
-            // Draw gradient bar - SHREDDY TEAL (#23D2C3) at bottom to PINK (#FF16A0) at top
+            // Draw gradient bar - SHREDDY TEAL at bottom to PINK at top
             for (int y = 0; y < barHeight; y++) {
                 float ratio = (float)y / (float)GRAPH_HEIGHT;
 
@@ -2161,13 +2280,17 @@ void drawSpectrum() {
             }
         }
 
-        // Peak hold indicator (small white dot at peak)
+        // Peak hold indicator (small dot at peak)
         if (peak_levels[i] > 0) {
             int peakY = GRAPH_Y + GRAPH_HEIGHT - (peak_levels[i] * GRAPH_HEIGHT / 8);
             if (peakY < GRAPH_Y) peakY = GRAPH_Y;
-            tft.drawPixel(x, peakY, SHREDDY_TEAL);
+            tft.drawPixel(x, peakY, TFT_WHITE);
         }
     }
+
+    // Update and draw waterfall
+    updateWaterfall();
+    drawWaterfall();
 }
 
 void scanAllChannels() {
@@ -2175,7 +2298,6 @@ void scanAllChannels() {
     memset(current_levels, 0, sizeof(current_levels));
 
     // Scan each channel multiple times for better detection
-    // Using Scanner's proven approach: 128us delay + button check in loop
     for (int sample = 0; sample < 30 && analyzerRunning; sample++) {
         // Check button every sample to prevent freeze
         if (pcf.digitalRead(BTN_SELECT) == LOW) {
@@ -2205,13 +2327,16 @@ void scanAllChannels() {
 }
 
 void drawHeader() {
-    tft.fillRect(0, 0, 240, 45, TFT_BLACK);
+    tft.fillRect(0, 20, 240, 18, TFT_BLACK);
 
     // Title
     tft.setTextColor(ORANGE, TFT_BLACK);
     tft.setTextSize(1);
-    tft.setCursor(50, 5);
+    tft.setCursor(45, 22);
     tft.print("2.4GHz SPECTRUM ANALYZER");
+
+    // Divider line
+    tft.drawLine(0, 38, 240, 38, ORANGE);
 
     // Find peak frequency
     int peakCh = 0;
@@ -2223,34 +2348,50 @@ void drawHeader() {
         }
     }
 
-    // Display peak info
+    // Peak info in status area (use status bar area or below header)
+    // Will be shown in bottom area instead to save space
+}
+
+void drawStatusArea() {
+    // Draw status info at very bottom of screen
+    tft.fillRect(0, 310, 240, 10, TFT_BLACK);
+
+    // Find peak
+    int peakCh = 0;
+    uint8_t peakVal = 0;
+    for (int i = 0; i < ANA_CHANNELS; i++) {
+        if (current_levels[i] > peakVal) {
+            peakVal = current_levels[i];
+            peakCh = i;
+        }
+    }
+
     tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
-    tft.setCursor(10, 25);
-    tft.printf("Peak: %d MHz", 2400 + peakCh);
+    tft.setTextSize(1);
+    tft.setCursor(5, 310);
+    tft.printf("Peak:%dMHz Lv:%d", 2400 + peakCh, peakVal);
 
-    tft.setCursor(130, 25);
-    tft.printf("Level: %d", peakVal);
-
-    // Instructions
     tft.setTextColor(TFT_DARKGREY, TFT_BLACK);
-    tft.setCursor(10, 38);
-    tft.print("SELECT:Exit  LEFT:Reset Peaks");
-
-    // Divider line
-    tft.drawLine(0, 47, 240, 47, ORANGE);
+    tft.setCursor(140, 310);
+    tft.print("SEL:Exit L:Rst");
 }
 
 void resetPeaks() {
     memset(peak_levels, 0, sizeof(peak_levels));
+    clearWaterfallBuffer();  // Also clear waterfall when resetting
 }
 
 void analyzerSetup() {
     tft.setRotation(0);
     tft.fillScreen(TFT_BLACK);
 
+    // Initialize waterfall color palette
+    initWaterfallPalette();
+
     // Initialize arrays
     memset(current_levels, 0, sizeof(current_levels));
     memset(peak_levels, 0, sizeof(peak_levels));
+    clearWaterfallBuffer();
 
     // Draw static UI elements
     drawHeader();
@@ -2284,7 +2425,6 @@ void analyzerSetup() {
     SPI.setBitOrder(MSBFIRST);
 
     // Reinitialize touch SPI after reconfiguring main SPI bus
-    // Touch uses separate VSPI pins (32/35/25/33) but shares the VSPI peripheral
     setupTouchscreen();
 
     pinMode(ANA_CE, OUTPUT);
@@ -2303,6 +2443,9 @@ void analyzerSetup() {
 
     float voltage = readBatteryVoltage();
     drawStatusBar(voltage, false);
+
+    // Initial status area
+    drawStatusArea();
 }
 
 void analyzerLoop() {
@@ -2328,7 +2471,7 @@ void analyzerLoop() {
     // Update display at ~15 FPS
     if (millis() - lastDisplayTime >= 66) {
         drawSpectrum();
-        drawHeader();
+        drawStatusArea();
         lastDisplayTime = millis();
     }
 }

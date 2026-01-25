@@ -31,14 +31,34 @@
   ░  ░  ░      ░  ░    ░  ░   ░  ░    ░  ░  ░    ░ ░     ░              ░    ░
 ```
 
-# ESP32-DIV v2.1 — HaleHound Edition
+# ESP32-DIV v2.2 — HaleHound Edition
 
 ![ESP32](https://img.shields.io/badge/ESP32--WROOM--32U-blue?logo=espressif)
-![Version](https://img.shields.io/badge/Version-2.1-green)
+![Version](https://img.shields.io/badge/Version-2.2-green)
 ![License](https://img.shields.io/badge/License-Educational-orange)
 ![Status](https://img.shields.io/badge/Status-Ready%20to%20Flash-brightgreen)
 
 > Multi-radio offensive security platform with WiFi, BLE, SubGHz (CC1101), and 2.4GHz (NRF24L01+) capabilities.
+
+---
+
+## What's New in v2.2 (January 25, 2026)
+
+### Spectrum Analyzer Waterfall Display
+
+The 2.4GHz Spectrum Analyzer now features a **scrolling waterfall display** with a stunning magenta-to-cyan gradient.
+
+**New Features:**
+- **100-row scrolling waterfall** — Real-time signal history below the spectrum bars
+- **Magenta → Cyan gradient** — New signals appear magenta at top, fade to cyan as they scroll down
+- **Brightness-based intensity** — Signal strength adjusts dot brightness (weak = dim, strong = full bright)
+- **Dots-only rendering** — Only active signals draw, black background where no signal exists
+- **Orange-Red accent color** — Updated primary color from magenta to orange-red (#FB20)
+
+**Visual Style:**
+- Top of waterfall: Hot magenta/pink (#FF16A0)
+- Bottom of waterfall: Cool cyan (#00FFFF)
+- Signal dots shift color as they scroll — looks rad as fuck
 
 ---
 
@@ -101,7 +121,7 @@ void drawScanScreen() {
 - **About Screen** — HaleHound branding
 - **Device Info Screen** — HaleHound branding
 - **About Page** — Red font styling
-- **Version Display** — "v2.1 - HaleHound Edition"
+- **Version Display** — "v2.2 - HaleHound Edition"
 
 ---
 
@@ -126,7 +146,7 @@ Features added that **never existed** in original CiferTech firmware:
 
 | Feature | Description |
 |---------|-------------|
-| **Spectrum Analyzer** | FFT-based 2.4GHz visualization |
+| **Spectrum Analyzer** | 2.4GHz visualization with scrolling magenta→cyan waterfall |
 | **WLAN Jammer** | Targeted WiFi disruption via NRF24 |
 | **Proto Kill** | Multi-protocol 2.4GHz disruption |
 | **SubGHz Brute Force** | Automated code TX (Linear, CAME, Nice, Chamberlain, DoorHan, Gate TX) |
@@ -155,7 +175,7 @@ Features added that **never existed** in original CiferTech firmware:
 
 ### 2.4GHz Radio (NRF24L01+)
 - **Channel Scanner** — Scan all 126 channels (2.400-2.525 GHz)
-- **Spectrum Analyzer** — FFT-based signal visualization
+- **Spectrum Analyzer** — Signal visualization with scrolling magenta→cyan waterfall
 - **WLAN Jammer** — Targeted WiFi disruption
 - **Proto Kill** — Multi-protocol 2.4GHz disruption
 
@@ -196,7 +216,7 @@ This edition features a complete visual overhaul:
 - **Skull Menu Icons** — 8 custom 16x16 skull-themed navigation icons
 - **Splash Screen** — Full-screen HaleHound branded startup
 - **Transparent Buttons** — Clean button styling with cyan/magenta borders
-- **Updated Branding** — "v2.1 - HaleHound Edition" displayed on device
+- **Updated Branding** — "v2.2 - HaleHound Edition" displayed on device
 
 ---
 

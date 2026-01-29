@@ -31,14 +31,53 @@
   ░  ░  ░      ░  ░    ░  ░   ░  ░    ░  ░  ░    ░ ░     ░              ░    ░
 ```
 
-# ESP32-DIV v2.2 — HaleHound Edition
+# ESP32-DIV v2.4 — HaleHound Edition
 
 ![ESP32](https://img.shields.io/badge/ESP32--WROOM--32U-blue?logo=espressif)
-![Version](https://img.shields.io/badge/Version-2.2-green)
+![Version](https://img.shields.io/badge/Version-2.4-green)
 ![License](https://img.shields.io/badge/License-Educational-orange)
 ![Status](https://img.shields.io/badge/Status-Ready%20to%20Flash-brightgreen)
 
 > Multi-radio offensive security platform with WiFi, BLE, SubGHz (CC1101), and 2.4GHz (NRF24L01+) capabilities.
+
+---
+
+## Colorblind Users: Duggie Edition Available
+
+If you have color vision deficiency, download the **Duggie Edition** instead — same features, colorblind-accessible palette.
+
+[Download Duggie Edition](https://github.com/JesseCHale/ESP32-DIV/releases/tag/v2.4)
+
+---
+
+## What's New in v2.4 (January 28, 2026)
+
+### Scanner Complete Redesign
+
+The 2.4GHz Scanner has been completely redesigned with a clean, fast bar graph display.
+
+**Scanner Improvements:**
+- **Clean Bar Graph Display** — Replaced confusing waterfall with responsive vertical bars
+- **WiFi-Only Range (2400-2484 MHz)** — No more ISM band noise, focused on WiFi channels
+- **Channel Markers** — Channels 1, 6, 11 (magenta) and Channel 13 (yellow) for international
+- **Teal-to-Pink Gradient** — Signal strength shown with color progression
+- **Peak-Hold with Decay** — Smooth, stable bar animation
+
+### Calibrate Background Noise — NOW FUNCTIONAL
+
+The calibration button actually works now:
+1. Go to Scanner screen
+2. Make sure no active transmitters are nearby
+3. Press the Calibrate button (first icon)
+4. Wait for "Noise floor captured!" message
+5. Start scanning — ambient noise is now filtered out
+
+### Spectrum Analyzer Updates
+
+- **WiFi-Only Range** — Now matches Scanner (2400-2484 MHz)
+- **Channel 13 Marker** — Added in yellow for international channel detection
+- **Updated Frequency Labels** — 2400 | 2442 | 2484
+- **Taller Bars** — Improved scaling for better visibility
 
 ---
 
@@ -54,11 +93,6 @@ The 2.4GHz Spectrum Analyzer now features a **scrolling waterfall display** with
 - **Brightness-based intensity** — Signal strength adjusts dot brightness (weak = dim, strong = full bright)
 - **Dots-only rendering** — Only active signals draw, black background where no signal exists
 - **Orange-Red accent color** — Updated primary color from magenta to orange-red (#FB20)
-
-**Visual Style:**
-- Top of waterfall: Hot magenta/pink (#FF16A0)
-- Bottom of waterfall: Cool cyan (#00FFFF)
-- Signal dots shift color as they scroll — looks rad as fuck
 
 ---
 
@@ -79,13 +113,6 @@ Separated the SPI buses completely:
 | **VSPI** | 18, 19, 23 | NRF24, CC1101, SD Card (shared) |
 | **HSPI** | 25, 32, 33, 35 | Touch Controller (dedicated) |
 
-**Code Changes:**
-- `Touchscreen.cpp` — Moved touch from VSPI to dedicated HSPI bus
-- `subghz.cpp` — CC1101 library corrected from HSPI to VSPI
-- `bluetooth.cpp` — Added touch reinit after 2.4GHz operations
-- `subghz.cpp` — Added touch reinit after SubGHz operations
-- Added proper exit handlers that clean up SPI state and reinitialize touch
-
 **Result:** Use any feature, touch keeps working. No more reboots.
 
 ---
@@ -95,52 +122,29 @@ Separated the SPI buses completely:
 **The Problem:**
 WiFi scanner showed garbled, overlapping text. Network names were huge, rows overlapped, the whole screen was a mess.
 
-**Root Cause:**
-`displayLogo()` sets Font 2 (16px) and Font 4 (26px) for the splash screen but never resets back to Font 1. When the WiFi scanner runs, it only called `tft.setTextSize(1)` which sets the SIZE MULTIPLIER, not the actual font. So it inherited Font 2 (16px height) but with row spacing of 15px — every line overlapped the previous by 1 pixel.
-
 **The Fix:**
 Added `tft.setTextFont(1)` before `tft.setTextSize(1)` in both functions:
 - `drawScanScreen()` at wifi.cpp:2649
 - `drawNetworkList()` at wifi.cpp:4082
 
-```cpp
-// BEFORE (BUG):
-void drawScanScreen() {
-    tft.setTextSize(1);  // Only sets multiplier, not font!
-
-// AFTER (FIXED):
-void drawScanScreen() {
-    tft.setTextFont(1);  // Reset to correct font first
-    tft.setTextSize(1);
-```
-
 ---
 
-### UI Updates
-
-- **About Screen** — HaleHound branding
-- **Device Info Screen** — HaleHound branding
-- **About Page** — Red font styling
-- **Version Display** — "v2.2 - HaleHound Edition"
-
----
-
-## ⚠️ V1 Board Owners
+## V1 Board Owners
 
 **This firmware is for original V1 ESP32-DIV boards** (ESP32-WROOM-32U).
 
 CiferTech's official v1.5.0 firmware targets the newer V2 boards with ESP32-S3. If you have a V1 board, that firmware won't work for you.
 
-**HaleHound Edition keeps V1 boards alive** with **8 new features**, 27 bug fixes, and continued support.
+**HaleHound Edition keeps V1 boards alive** with **8 new features**, 27+ bug fixes, and continued support.
 
 | Your Board | Firmware |
 |------------|----------|
-| V1 (ESP32-WROOM-32U) | **HaleHound Edition** ← You're here |
+| V1 (ESP32-WROOM-32U) | **HaleHound Edition** |
 | V2 (ESP32-S3) | CiferTech v1.5.0 |
 
 ---
 
-## ✨ New Features (HaleHound Exclusive)
+## New Features (HaleHound Exclusive)
 
 Features added that **never existed** in original CiferTech firmware:
 
@@ -174,7 +178,7 @@ Features added that **never existed** in original CiferTech firmware:
 ## Features
 
 ### 2.4GHz Radio (NRF24L01+)
-- **Channel Scanner** — Scan all 126 channels (2.400-2.525 GHz)
+- **Channel Scanner** — Scan WiFi channels (2400-2484 MHz) with noise calibration
 - **Spectrum Analyzer** — Signal visualization with scrolling magenta→cyan waterfall
 - **WLAN Jammer** — Targeted WiFi disruption
 - **Proto Kill** — Multi-protocol 2.4GHz disruption
@@ -216,7 +220,7 @@ This edition features a complete visual overhaul:
 - **Skull Menu Icons** — 8 custom 16x16 skull-themed navigation icons
 - **Splash Screen** — Full-screen HaleHound branded startup
 - **Transparent Buttons** — Clean button styling with cyan/magenta borders
-- **Updated Branding** — "v2.2 - HaleHound Edition" displayed on device
+- **Updated Branding** — "v2.4 - HaleHound Edition" displayed on device
 
 ---
 
@@ -275,106 +279,6 @@ flash_windows.bat
 | LEFT | 4 |
 | RIGHT | 5 |
 | SELECT | 7 |
-
----
-
-## Bug Fixes (27 Total)
-
-### v2.1 Fixes (3 new)
-
-#### 1. SPI Bus Conflict — Touch Dies After Radio Use
-**Severity:** CRITICAL
-
-**Problem:** Touch controller shared VSPI bus with NRF24, CC1101, and SD Card. After using SubGHz or 2.4GHz features, touch stopped responding until reboot.
-
-**Fix:**
-- Moved touch to dedicated HSPI bus (pins 25, 32, 33, 35)
-- Added exit handlers to reinitialize touch after radio operations
-- CC1101 library corrected from HSPI to VSPI
-
-**Files:** `Touchscreen.cpp`, `bluetooth.cpp`, `subghz.cpp`, `bleconfig.h`, `wificonfig.h`
-
----
-
-#### 2. WiFi Scanner Font Inheritance
-**Severity:** HIGH
-
-**Problem:** `displayLogo()` set Font 2/4 but never reset to Font 1. WiFi scanner inherited wrong font, causing 16px text with 15px row spacing = overlapping garbled text.
-
-**Fix:** Added `tft.setTextFont(1)` before `tft.setTextSize(1)` in `drawScanScreen()` and `drawNetworkList()`.
-
-**Files:** `wifi.cpp:2649`, `wifi.cpp:4082`
-
----
-
-#### 3. Touch Reinit After Feature Exit
-**Severity:** MEDIUM
-
-**Problem:** Even with separate SPI buses, touch needed reinitialization after radio features released SPI.
-
-**Fix:** Added `ts.begin()` calls in SubGHz and 2.4GHz exit handlers.
-
-**Files:** `subghz.cpp`, `bluetooth.cpp`
-
----
-
-### v2.0 Fixes (24)
-
-#### Original CiferTech Fixes (17)
-
-| Priority | Fix |
-|----------|-----|
-| HIGH | Buffer overflow in deauth frame |
-| HIGH | Wrong modulation for garage/Tesla replay |
-| HIGH | Integer underflow on profile delete |
-| MEDIUM | SCREEN_HEIGHT 64→320 (was OLED value) |
-| MEDIUM | Double scanNetworks() call removed |
-| LOW | Unused variables cleaned up |
-
-#### HaleHound Edition Fixes (7)
-
-**1. Assignment vs Comparison Bug (wifi.cpp:765)**
-```cpp
-// BEFORE: if (activeIcon = 3)   // Assignment - always true!
-// AFTER:  if (activeIcon == 3)  // Proper comparison
-```
-
-**2. Null Task Handle Crash (wifi.cpp:1280-1292)**
-```cpp
-// BEFORE: vTaskDelete(wifiScanTaskHandle);  // Crash if NULL!
-// AFTER:  if (wifiScanTaskHandle != NULL) { vTaskDelete(...); }
-```
-
-**3. CC1101 TX/RX Pin Swap (subghz.cpp)**
-- GDO0 (GPIO 16) is TX data line
-- GDO2 (GPIO 26) is RX data line
-- Original code had them backwards
-
-**4. RMT Pulse Truncation (subghz.cpp:2538-2560)**
-- ESP32 RMT max duration is 32767μs
-- Long pilot pulses now split across multiple symbols
-
-**5. Beacon SSID Overflow (wifi.cpp:549-572)**
-- Fixed packet offsets for variable SSID length
-- Prevents malformed beacon frames
-
-**6. GPIO 16/26 Conflict — SubGHz vs 2.4GHz**
-- Added `cleanupSubGHz()` before NRF24 operations
-- Added `cleanupNRF24()` before SubGHz operations
-- Proper interrupt disable and SPI release
-
-**7. GPIO 5 Conflict — SD Card vs NRF24 radio3**
-- Added `cleanupSD()` before radio3 operations
-- Added `cleanupNRF24()` before SD operations
-
----
-
-## Stability Improvements
-
-- **46 button debounce loops** — Added `delay(10); yield();` to prevent watchdog resets
-- **16 recursive calls removed** — Eliminated stack overflow from recursive `handleButtons()` calls
-- **RMT driver cleanup** — Proper `rmt_driver_uninstall()` on SubGHz exit
-- **SPI bus isolation** — Touch on dedicated HSPI prevents conflicts
 
 ---
 

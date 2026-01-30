@@ -226,17 +226,17 @@ void drawStatusBar(float batteryVoltage, bool forceUpdate) {
     tft.fillRect(x + 22, y + 3, 2, 4, SHREDDY_TEAL);         // Battery terminal
     
     int batteryLevelWidth = map(batteryPercentage, 0, 100, 0, 20);
-    uint16_t batteryColor = (batteryPercentage > 20) ? TFT_GREEN : TFT_RED;  
+    uint16_t batteryColor = (batteryPercentage > 20) ? GREEN : RED;
     tft.fillRoundRect(x + 2, y + 2, batteryLevelWidth, 6, 1, batteryColor);
 
-    // **Display Battery Percentage (Neon Green)**
+    // **Display Battery Percentage**
     tft.setCursor(x + 30, y + 2);
-    tft.setTextColor(TFT_GREEN, DARK_GRAY);  
+    tft.setTextColor(GREEN, DARK_GRAY);  
     tft.setTextFont(1);
     tft.setTextSize(1);
     tft.print(String(batteryPercentage) + "%");
 
-    // **Draw Wi-Fi Signal Bars (Neon Green)**
+    // **Draw Wi-Fi Signal Bars**
     int wifiX = 180;
     int wifiY = y + 11;
     for (int i = 0; i < 4; i++) {
@@ -244,26 +244,26 @@ void drawStatusBar(float batteryVoltage, bool forceUpdate) {
       int barWidth = 4;
       int barX = wifiX + i * 6;
       if (wifiStrength > i * 25) {
-        tft.fillRoundRect(barX, wifiY - barHeight, barWidth, barHeight, 1, TFT_GREEN);  
+        tft.fillRoundRect(barX, wifiY - barHeight, barWidth, barHeight, 1, GREEN);
       } else {
-        tft.drawRoundRect(barX, wifiY - barHeight, barWidth, barHeight, 1, SHREDDY_TEAL);  
+        tft.drawRoundRect(barX, wifiY - barHeight, barWidth, barHeight, 1, SHREDDY_TEAL);
       }
     }
 
-    // Temperature indicator: Green (cool), Yellow (warm), Red (hot)
+    // Temperature indicator
     if (internalTemp >= 55) {
-      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, TFT_RED);      // HOT - danger zone
+      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, RED);           // HOT - danger zone
     } else if (internalTemp >= 50) {
-      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, TFT_YELLOW);   // WARM - caution
+      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, ORANGE);        // WARM - caution
     } else {
-      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, TFT_GREEN);    // COOL - normal
+      tft.drawBitmap(203, y - 3, bitmap_icon_temp, 16, 16, HALEHOUND_CYAN);  // COOL - normal
     }
 
     // **Display SD Card Icon (If Available)**
     if (sdAvailable) {
-      tft.drawBitmap(220, y - 3, bitmap_icon_sdcard, 16, 16, TFT_GREEN);
+      tft.drawBitmap(220, y - 3, bitmap_icon_sdcard, 16, 16, GREEN);
     } else {
-      tft.drawBitmap(220, y - 3, bitmap_icon_nullsdcard, 16, 16, TFT_RED);
+      tft.drawBitmap(220, y - 3, bitmap_icon_nullsdcard, 16, 16, RED);
     }
 
     // **Bottom Line for Aesthetic (Neon Green)**
@@ -388,21 +388,21 @@ void displayLogo(uint16_t color, int displayTime) {
 
   // Version line
   tft.setTextFont(2);  // Font 2 = 16px
-  String version = "v2.1 - HaleHound Edition";
+  String version = "v2.4 - HaleHound Edition";
   int16_t versionWidth = tft.textWidth(version);
   tft.setCursor((screenWidth - versionWidth) / 2, 285);
   tft.print(version);
 
   // Credit line
   tft.setTextFont(2);
-  String credit = "by HaleHound";
+  String credit = "By: JMFH";
   int16_t creditWidth = tft.textWidth(credit);
   tft.setCursor((screenWidth - creditWidth) / 2, 303);
   tft.print(credit);
 
   Serial.println("==========================================");
-  Serial.println("ESP32-DIV v2.1 - HaleHound Edition        ");
-  Serial.println("Developed by: HaleHound                   ");
+  Serial.println("ESP32-DIV v2.4 - HaleHound Edition        ");
+  Serial.println("Developed by: HaleHound (JMFH)            ");
   Serial.println("Original by:  CiferTech                   ");
   Serial.println("GitHub:       github.com/JesseCHale       ");
   Serial.println("==========================================");

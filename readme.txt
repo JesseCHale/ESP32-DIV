@@ -32,7 +32,7 @@
 ```
 
 ================================================================================
-                         ESP32-DIV FIRMWARE v2.1
+                         ESP32-DIV FIRMWARE v2.4
                           HALEHOUND EDITION
                               by JMFH
                            January 2026
@@ -246,7 +246,7 @@ This edition features a complete visual overhaul:
 - Skull Menu Icons: 8 custom 16x16 skull-themed navigation icons
 - Splash Screen: Full-screen HaleHound branded startup
 - Transparent Buttons: Clean button styling with cyan/magenta borders
-- Updated Branding: "v2.1 - HaleHound Edition" displayed on device
+- Updated Branding: "v2.4 - HaleHound Edition" displayed on device
 
 ================================================================================
                     UI/UX IMPROVEMENTS

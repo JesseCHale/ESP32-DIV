@@ -1,5 +1,5 @@
 ================================================================================
-              ESP32-DIV v2.1 HaleHound Edition - READY TO FLASH
+              ESP32-DIV v2.4 HaleHound Edition - READY TO FLASH
 ================================================================================
 
 This package contains pre-compiled firmware ready to flash directly to your
@@ -103,6 +103,6 @@ Address    Size       Description
 Total: ~2MB of 4MB flash used
 
 ================================================================================
-                    ESP32-DIV v2.1 HaleHound Edition - January 2026
+                    ESP32-DIV v2.4 HaleHound Edition - January 2026
                               HaleHound Security
 ================================================================================

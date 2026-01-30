@@ -1,4 +1,5 @@
-ESP32-DIV FIRMWARE STABILITY FIXES - Applied 2026-01-04
+ESP32-DIV FIRMWARE STABILITY FIXES
+Applied in v2.1+, carried forward to v2.4
 ═══════════════════════════════════════════════════════════
 
 FILE: ESP32-DIV.ino
@@ -11,16 +12,16 @@ FIXES APPLIED:
    Problem: Empty while loops caused CPU spin and watchdog timer resets
    Pattern: while (isButtonPressed(BTN_SELECT)) { }
    Fix Applied: Added delay(10); yield(); inside each empty loop body
-   
+
    Example BEFORE:
    while (isButtonPressed(BTN_SELECT)) {
    }
-   
+
    Example AFTER:
    while (isButtonPressed(BTN_SELECT)) {
        delay(10); yield();
    }
-   
+
    Impact: Prevents CPU from spinning, allows RTOS to schedule other tasks,
            prevents watchdog timer resets
 
@@ -28,24 +29,23 @@ FIXES APPLIED:
    Problem: Recursive calls after displayMenu() caused stack overflow
    Pattern: displayMenu(); followed by handleButtons();
    Fix Applied: Commented out all recursive handleButtons() calls
-   
+
    Example BEFORE:
    displayMenu();
    handleButtons();
-   
+
    Example AFTER:
    displayMenu();
    // handleButtons(); // Removed - let main loop() handle button polling naturally
-   
+
    Impact: Prevents stack overflow, lets main loop() poll buttons naturally,
            improves stability and responsiveness
 
 VERIFICATION:
 ═════════════
-✓ 46 button debounce loops fixed (grep count: 46)
-✓ 16 recursive handleButtons() calls removed (grep count: 16)
-✓ Line count maintained (no functionality removed)
-✓ FACTS protocol backup created on JMFH X10
+- 46 button debounce loops fixed
+- 16 recursive handleButtons() calls removed
+- Line count maintained (no functionality removed)
 
 EXPECTED RESULTS:
 ═════════════════
@@ -54,10 +54,6 @@ EXPECTED RESULTS:
 - More responsive UI
 - Stable long-term operation
 - Proper task scheduling in ESP32 RTOS
-
-BACKUP LOCATION:
-════════════════
-/Volumes/JMFH X10/fenrir-backups/code/_Users_jmfh_Desktop_ESP32-DIv MASTER_Fenrir UpGrades_ESP32-DIV__ESP32-DIV.ino.20260104_155327.*
 
 TESTING RECOMMENDATIONS:
 ═════════════════════════

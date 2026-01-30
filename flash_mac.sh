@@ -1,6 +1,6 @@
 #!/bin/bash
 echo "================================================================================"
-echo "             ESP32-DIV FENRIR v2.0 - Mac Flash Script"
+echo "             ESP32-DIV v2.4 HaleHound Edition - Mac Flash Script"
 echo "================================================================================"
 echo ""
 

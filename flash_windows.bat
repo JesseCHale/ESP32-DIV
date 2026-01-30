@@ -1,6 +1,6 @@
 @echo off
 echo ================================================================================
-echo              ESP32-DIV FENRIR v2.0 - Windows Flash Script
+echo              ESP32-DIV v2.4 HaleHound Edition - Windows Flash Script
 echo ================================================================================
 echo.
 

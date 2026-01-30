@@ -1553,13 +1553,42 @@ static bool uiDrawn = false;
 #define _NRF24_RF_SETUP 0x06
 #define _NRF24_RPD      0x09
 
-int backgroundNoise[CHANNELS] = {0};
-
 volatile bool scanning = true;
 
 #define SCREEN_HEIGHT 180
 #define LINE_HEIGHT 12
 #define MAX_LINES (SCREEN_HEIGHT / LINE_HEIGHT)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SCANNER BAR GRAPH - Clean & Fast - WiFi ONLY (2400-2484 MHz)
+// HaleHound v2.3 - Jesse Hale
+// Focused on WiFi channels 1-13, no ISM noise
+// ═══════════════════════════════════════════════════════════════════════════
+
+// WiFi-only scanning range: 2400-2484 MHz = NRF channels 0-84
+#define SCAN_CHANNELS 85          // 0-84 = 85 channels (2400-2484 MHz)
+
+// Bar graph layout
+#define BAR_START_X 10
+#define BAR_START_Y 50            // After header
+#define BAR_WIDTH 220             // Full width for display
+#define BAR_HEIGHT 200            // Tall bars for visibility
+
+// WiFi channel positions (NRF24 channel numbers)
+// WiFi Ch 1 = 2412 MHz = NRF Ch 12
+// WiFi Ch 6 = 2437 MHz = NRF Ch 37
+// WiFi Ch 11 = 2462 MHz = NRF Ch 62
+// WiFi Ch 13 = 2472 MHz = NRF Ch 72
+#define WIFI_CH1_NRF 12
+#define WIFI_CH6_NRF 37
+#define WIFI_CH11_NRF 62
+#define WIFI_CH13_NRF 72
+
+// Peak hold for smooth display
+uint8_t bar_peak_levels[SCAN_CHANNELS];
+int backgroundNoise[SCAN_CHANNELS] = {0};  // WiFi-only noise floor
+bool noiseCalibrated = false;              // Track if calibration has been done
+bool scanner_initialized = false;
 
 String Buffer[MAX_LINES];
 uint16_t Buffercolor[MAX_LINES];
@@ -1653,32 +1682,37 @@ void Print(String text, uint16_t color, bool extraSpace = false) {
 
 void calibrateBackgroundNoise() {
 
-  Print("[!] Calibrating background noise", TFT_ORANGE, false);
+  Print("[!] Calibrating noise floor...", TFT_ORANGE, false);
 
-  for (int i = 0; i < 2; i++) {
+  // Clear previous calibration
+  memset(backgroundNoise, 0, sizeof(backgroundNoise));
+
+  // Sample WiFi range multiple times to get accurate noise floor
+  int samples = 5;
+  for (int s = 0; s < samples; s++) {
     disable();
-    for (int j = 0; j < 50; j++) {
-      for (int i = 0; i < CHANNELS; i++) {
-        setRegister(_NRF24_RF_CH, (128 * i) / CHANNELS);
-        setRX();
-        delayMicroseconds(50);
+    for (int cycles = 0; cycles < 35; cycles++) {
+      for (int i = 0; i < SCAN_CHANNELS; i++) {
+        setChannel(i);  // Uses WiFi-only range (0-84 = 2400-2484 MHz)
+        enable();
+        delayMicroseconds(128);
         disable();
-        if (getRegister(_NRF24_RPD) > 0) channel[i]++;
+        if (carrierDetected()) {
+          backgroundNoise[i]++;
+        }
       }
     }
     Print(".", SHREDDY_TEAL, false);
-    for (int j = 0; j < CHANNELS; j++) {
-      backgroundNoise[j] += channel[j];
-
-    }
   }
 
-  for (int i = 0; i < CHANNELS; i++) {
-    backgroundNoise[i] /= 5;
+  // Average the samples
+  for (int i = 0; i < SCAN_CHANNELS; i++) {
+    backgroundNoise[i] /= samples;
   }
 
-  Print("[+] Background noise calibration", SHREDDY_TEAL, false);
-  Print("[+] done.", SHREDDY_TEAL, false);
+  noiseCalibrated = true;
+  Print("[+] Noise floor captured!", SHREDDY_TEAL, false);
+  Print("[+] Ambient RF will be filtered", SHREDDY_TEAL, false);
 }
 
 void scan() {
@@ -1815,24 +1849,192 @@ void outputChannels() {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SCANNER BAR GRAPH FUNCTIONS - Clean, Fast, Functional
+// Teal (low) -> Pink (high) gradient - distinct color scheme
+// ═══════════════════════════════════════════════════════════════════════════
+
+uint16_t getBarColor(int height, int maxHeight) {
+    // HaleHound gradient: Teal (0, 207, 255) at bottom -> Magenta/Pink (255, 28, 82) at top
+    float ratio = (float)height / (float)maxHeight;
+    if (ratio > 1.0f) ratio = 1.0f;
+
+    // Teal RGB(0, 207, 255) -> Hot Pink RGB(255, 28, 82)
+    uint8_t r = 0 + (uint8_t)(ratio * 255);
+    uint8_t g = 207 - (uint8_t)(ratio * (207 - 28));
+    uint8_t b = 255 - (uint8_t)(ratio * (255 - 82));
+
+    return tft.color565(r, g, b);
+}
+
+void clearBarGraph() {
+    memset(bar_peak_levels, 0, sizeof(bar_peak_levels));
+}
+
+void drawScannerFrame() {
+    // Draw static frame elements (only once)
+
+    // Y-axis line
+    tft.drawFastVLine(BAR_START_X - 2, BAR_START_Y, BAR_HEIGHT, SHREDDY_TEAL);
+
+    // X-axis line
+    tft.drawFastHLine(BAR_START_X, BAR_START_Y + BAR_HEIGHT, BAR_WIDTH, SHREDDY_TEAL);
+
+    // WiFi channel markers - vertical dashed lines (scaled to SCAN_CHANNELS)
+    int x1 = BAR_START_X + (WIFI_CH1_NRF * BAR_WIDTH / SCAN_CHANNELS);
+    int x6 = BAR_START_X + (WIFI_CH6_NRF * BAR_WIDTH / SCAN_CHANNELS);
+    int x11 = BAR_START_X + (WIFI_CH11_NRF * BAR_WIDTH / SCAN_CHANNELS);
+    int x13 = BAR_START_X + (WIFI_CH13_NRF * BAR_WIDTH / SCAN_CHANNELS);
+
+    for (int y = BAR_START_Y; y < BAR_START_Y + BAR_HEIGHT; y += 6) {
+        tft.drawPixel(x1, y, ORANGE);
+        tft.drawPixel(x6, y, ORANGE);
+        tft.drawPixel(x11, y, ORANGE);
+        tft.drawPixel(x13, y, TFT_YELLOW);  // Yellow for flyer channel
+    }
+
+    // Channel labels at top
+    tft.setTextColor(ORANGE, TFT_BLACK);
+    tft.setTextSize(1);
+    tft.setCursor(x1 - 2, BAR_START_Y - 10);
+    tft.print("1");
+    tft.setCursor(x6 - 2, BAR_START_Y - 10);
+    tft.print("6");
+    tft.setCursor(x11 - 6, BAR_START_Y - 10);
+    tft.print("11");
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tft.setCursor(x13 - 6, BAR_START_Y - 10);
+    tft.print("13");
+
+    // Frequency labels at bottom - WiFi range only (2400-2484)
+    tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
+    tft.setCursor(BAR_START_X - 5, BAR_START_Y + BAR_HEIGHT + 4);
+    tft.print("2400");
+    tft.setCursor(BAR_START_X + BAR_WIDTH/2 - 12, BAR_START_Y + BAR_HEIGHT + 4);
+    tft.print("2442");
+    tft.setCursor(BAR_START_X + BAR_WIDTH - 28, BAR_START_Y + BAR_HEIGHT + 4);
+    tft.print("2484");
+
+    // Divider line before status
+    tft.drawFastHLine(0, BAR_START_Y + BAR_HEIGHT + 16, 240, ORANGE);
+}
+
+void drawBarGraph() {
+    // Clear bar area only (fast)
+    tft.fillRect(BAR_START_X, BAR_START_Y, BAR_WIDTH, BAR_HEIGHT, TFT_BLACK);
+
+    // Redraw WiFi channel markers (they got cleared)
+    int x1 = BAR_START_X + (WIFI_CH1_NRF * BAR_WIDTH / SCAN_CHANNELS);
+    int x6 = BAR_START_X + (WIFI_CH6_NRF * BAR_WIDTH / SCAN_CHANNELS);
+    int x11 = BAR_START_X + (WIFI_CH11_NRF * BAR_WIDTH / SCAN_CHANNELS);
+    int x13 = BAR_START_X + (WIFI_CH13_NRF * BAR_WIDTH / SCAN_CHANNELS);
+
+    for (int y = BAR_START_Y; y < BAR_START_Y + BAR_HEIGHT; y += 6) {
+        tft.drawPixel(x1, y, ORANGE);
+        tft.drawPixel(x6, y, ORANGE);
+        tft.drawPixel(x11, y, ORANGE);
+        tft.drawPixel(x13, y, TFT_YELLOW);
+    }
+
+    // Track peak for status display
+    int peakChannel = 0;
+    uint8_t peakLevel = 0;
+
+    // Draw bars for each channel (WiFi range only)
+    for (int ch = 0; ch < SCAN_CHANNELS; ch++) {
+        uint8_t level = bar_peak_levels[ch];
+
+        // Track peak
+        if (level > peakLevel) {
+            peakLevel = level;
+            peakChannel = ch;
+        }
+
+        if (level > 0) {
+            // Calculate bar dimensions - AGGRESSIVE scaling for visibility
+            int x = BAR_START_X + (ch * BAR_WIDTH / SCAN_CHANNELS);
+            int barH = (level * BAR_HEIGHT) / 3;  // Scale to max 3 - taller bars
+            if (barH > BAR_HEIGHT) barH = BAR_HEIGHT;
+            if (barH < 4 && level > 0) barH = 4;  // Minimum visible
+
+            int barY = BAR_START_Y + BAR_HEIGHT - barH;
+
+            // Draw gradient bar (bottom to top color change)
+            for (int y = 0; y < barH; y++) {
+                uint16_t color = getBarColor(y, BAR_HEIGHT);
+                tft.drawFastHLine(x, barY + barH - 1 - y, 2, color);
+            }
+        }
+    }
+
+    // Status area at bottom
+    int statusY = BAR_START_Y + BAR_HEIGHT + 20;
+    tft.fillRect(0, statusY, 240, 50, TFT_BLACK);
+
+    // Peak frequency display - BIG and clear
+    int peakFreq = 2400 + peakChannel;
+    tft.setTextColor(ORANGE, TFT_BLACK);
+    tft.setTextSize(1);
+    tft.setCursor(10, statusY);
+    tft.print("PEAK:");
+
+    tft.setTextSize(2);
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setCursor(50, statusY - 2);
+    tft.print(peakFreq);
+    tft.setTextSize(1);
+    tft.print(" MHz");
+
+    // Signal strength bar
+    tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
+    tft.setCursor(10, statusY + 20);
+    tft.print("SIG:");
+
+    int barX = 40;
+    int barW = 150;
+    int barH = 12;
+    tft.drawRect(barX, statusY + 18, barW, barH, SHREDDY_TEAL);
+
+    int fillW = (peakLevel * (barW - 2)) / 4;  // Match bar scaling
+    if (fillW > barW - 2) fillW = barW - 2;
+    if (fillW > 0) {
+        // Gradient fill for signal bar
+        for (int x = 0; x < fillW; x++) {
+            uint16_t c = getBarColor(x, barW);
+            tft.drawFastVLine(barX + 1 + x, statusY + 19, barH - 2, c);
+        }
+    }
+
+    // Percentage - capped at 100%
+    int pct = (peakLevel * 100) / 4;
+    if (pct > 100) pct = 100;
+    tft.setTextColor(TFT_WHITE, TFT_BLACK);
+    tft.setCursor(barX + barW + 5, statusY + 20);
+    tft.print(pct);
+    tft.print("%");
+}
+
 void display() {
   runUI();
 
-  // ========== SCANNER GRAPH POSITIONING - MOVED WAY UP ==========
-  #define SCANNER_GRAPH_TOP 40       // Top of graph area
-  #define SCANNER_GRAPH_BOTTOM 200   // Baseline in MIDDLE of screen (was 280/308)
-  #define SCANNER_GRAPH_HEIGHT (SCANNER_GRAPH_BOTTOM - SCANNER_GRAPH_TOP)  // 160 pixels
+  // Initialize scanner frame on first run
+  if (!scanner_initialized) {
+    clearBarGraph();
+    drawScannerFrame();
+    scanner_initialized = true;
+  }
 
   memset(values, 0, sizeof(values));
 
-  int scanCycles = 50;
+  // Scan WiFi channels only (0-84 = 2400-2484 MHz) - SMOOTH & STABLE
+  int scanCycles = 35;  // More cycles = smoother, more stable bars
   while (scanCycles-- && scanning) {
     if (isSelectButtonPressed()) {
       scanning = false;
       Print("Display interrupted by user", TFT_YELLOW, true);
       return;
     }
-    for (int i = 0; i < N && scanning; ++i) {
+    for (int i = 0; i < SCAN_CHANNELS && scanning; ++i) {
       setChannel(i);
       enable();
       delayMicroseconds(128);
@@ -1844,64 +2046,24 @@ void display() {
   }
 
   if (scanning) {
-    // Clear graph area
-    tft.fillRect(0, SCANNER_GRAPH_TOP - 10, 240, SCANNER_GRAPH_HEIGHT + 50, TFT_BLACK);
+    // Update peak levels with decay for smooth display
+    for (int i = 0; i < SCAN_CHANNELS; i++) {
+      // Subtract noise floor if calibrated
+      int adjusted = values[i];
+      if (noiseCalibrated && backgroundNoise[i] > 0) {
+        adjusted = values[i] - backgroundNoise[i];
+        if (adjusted < 0) adjusted = 0;  // Floor at zero
+      }
 
-#define CHANNELS 128
-#define SCANNER_GRAPH_X 10
-#define SCANNER_GRAPH_WIDTH 220
-
-    int barWidth = SCANNER_GRAPH_WIDTH / CHANNELS;  // ~1.7px per channel
-    if (barWidth < 1) barWidth = 1;
-    int maxBarHeight = SCANNER_GRAPH_HEIGHT - 5;
-
-    // Draw ALL 128 channels continuously - TEAL TO MAGENTA GRADIENT
-    for (int i = 0; i < 128; ++i) {
-      int x = SCANNER_GRAPH_X + (i * SCANNER_GRAPH_WIDTH / CHANNELS);
-
-      int barHeight = values[i] * 20;  // BOOSTED for max visibility
-      if (barHeight < 4 && values[i] > 0) barHeight = 4;  // Minimum visible height
-      if (barHeight > maxBarHeight) barHeight = maxBarHeight;
-
-      if (barHeight > 0) {
-        // Draw gradient bar - SHREDDY TEAL (#23D2C3) at bottom to PINK (#FF16A0) at top
-        for (int y = 0; y < barHeight; y++) {
-          float ratio = (float)y / (float)maxBarHeight;
-
-          // Shreddy Teal (35, 210, 195) -> Shreddy Pink (255, 22, 160)
-          uint8_t r = 35 + (uint8_t)(ratio * (255 - 35));
-          uint8_t g = 210 - (uint8_t)(ratio * (210 - 22));
-          uint8_t b = 195 - (uint8_t)(ratio * (195 - 160));
-
-          // Convert to 565 color
-          uint16_t color = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
-
-          int drawY = SCANNER_GRAPH_BOTTOM - barHeight + y;
-          tft.drawFastHLine(x, drawY, barWidth + 1, color);
-        }
+      if (adjusted > bar_peak_levels[i]) {
+        bar_peak_levels[i] = adjusted;
+      } else if (bar_peak_levels[i] > 0) {
+        bar_peak_levels[i]--;  // Slow decay
       }
     }
 
-    // X-axis labels (channel numbers)
-    tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
-    tft.setCursor(10, SCANNER_GRAPH_BOTTOM + 5);
-    tft.print("1..5.10..20..40..50..80..90..110..128");
-
-    // Draw axes
-    int axisX = 10;
-    tft.drawLine(axisX, SCANNER_GRAPH_TOP, axisX, SCANNER_GRAPH_BOTTOM, SHREDDY_TEAL);      // Y-axis
-    tft.drawLine(axisX, SCANNER_GRAPH_BOTTOM, 230, SCANNER_GRAPH_BOTTOM, SHREDDY_TEAL);     // X-axis
-
-    // Axis markers
-    tft.fillCircle(axisX, SCANNER_GRAPH_BOTTOM, 1, TFT_RED);    // Origin
-    tft.fillCircle(axisX, SCANNER_GRAPH_TOP, 1, TFT_RED);       // Y-axis top
-    tft.fillCircle(230, SCANNER_GRAPH_BOTTOM, 1, TFT_RED);      // X-axis end
-
-    // Axis labels
-    tft.setTextColor(SHREDDY_TEAL);
-    tft.setTextSize(1);
-    tft.drawString("Y", axisX + 5, SCANNER_GRAPH_TOP);
-    tft.drawString("X", 220, SCANNER_GRAPH_BOTTOM - 12);
+    // Draw the bar graph - NO WATERFALL = FAST
+    drawBarGraph();
   }
 }
 
@@ -1909,6 +2071,10 @@ void scannerSetup() {
 
   tft.setRotation(0);
   tft.fillScreen(TFT_BLACK);
+
+  // Initialize bar graph for fresh start
+  clearBarGraph();
+  scanner_initialized = false;  // Will draw frame on first display()
 
   float currentBatteryVoltage = readBatteryVoltage();
   drawStatusBar(currentBatteryVoltage, false);
@@ -1989,7 +2155,7 @@ void scannerLoop() {
 
 /*
  * 2.4GHz Spectrum Analyzer - Real-time visualization with WATERFALL
- * HaleHound v2.1 - Jesse Hale
+ * HaleHound v2.4 - Jesse Hale
  *
  * WATERFALL DISPLAY: Scrolling history below spectrum bars
  * Same teal-to-magenta gradient as the bars
@@ -2000,7 +2166,7 @@ namespace Analyzer {
 
 #define ANA_CE  16
 #define ANA_CSN 17
-#define ANA_CHANNELS 128
+#define ANA_CHANNELS 85           // WiFi-only: 2400-2484 MHz (same as Scanner)
 
 // Data arrays
 uint8_t current_levels[ANA_CHANNELS];
@@ -2028,9 +2194,11 @@ uint16_t waterfall_palette[64];
 // WiFi Ch 1 = 2412 MHz = NRF Ch 12
 // WiFi Ch 6 = 2437 MHz = NRF Ch 37
 // WiFi Ch 11 = 2462 MHz = NRF Ch 62
+// WiFi Ch 13 = 2472 MHz = NRF Ch 72
 const int WIFI_CH1 = 12;
 const int WIFI_CH6 = 37;
 const int WIFI_CH11 = 62;
+const int WIFI_CH13 = 72;
 
 // Display constants - SPECTRUM GRAPH (upper portion)
 #define GRAPH_X 10
@@ -2097,8 +2265,8 @@ void initWaterfallPalette() {
     waterfall_initialized = true;
 }
 
-// Get gradient color based on vertical position
-// Top (row 0) = Magenta, Bottom (row max) = Cyan
+// HaleHound gradient waterfall
+// Top (row 0) = Magenta/Pink, Bottom (row max) = Cyan
 // Signal strength adjusts brightness
 uint16_t getGradientWaterfallColor(uint8_t level, int row, int maxRows) {
     if (level == 0) return TFT_BLACK;
@@ -2106,11 +2274,11 @@ uint16_t getGradientWaterfallColor(uint8_t level, int row, int maxRows) {
     // Calculate vertical position ratio (0.0 = top, 1.0 = bottom)
     float vRatio = (float)row / (float)(maxRows - 1);
 
-    // Top color: Magenta/Pink - RGB(255, 22, 160)
-    // Bottom color: Cyan - RGB(0, 255, 255)
+    // Top color: Hot Pink - RGB(255, 28, 82)
+    // Bottom color: Cyan - RGB(0, 207, 255)
     uint8_t r = 255 - (uint8_t)(vRatio * 255);    // 255 -> 0
-    uint8_t g = 22 + (uint8_t)(vRatio * 233);     // 22 -> 255
-    uint8_t b = 160 + (uint8_t)(vRatio * 95);     // 160 -> 255
+    uint8_t g = 28 + (uint8_t)(vRatio * 179);     // 28 -> 207
+    uint8_t b = 82 + (uint8_t)(vRatio * 173);     // 82 -> 255
 
     // Adjust brightness based on signal level (1-30 typical range)
     // Weak signals = dimmer, strong signals = full bright
@@ -2191,12 +2359,14 @@ void drawWiFiMarkers() {
     int x1 = GRAPH_X + (WIFI_CH1 * GRAPH_WIDTH / ANA_CHANNELS);
     int x6 = GRAPH_X + (WIFI_CH6 * GRAPH_WIDTH / ANA_CHANNELS);
     int x11 = GRAPH_X + (WIFI_CH11 * GRAPH_WIDTH / ANA_CHANNELS);
+    int x13 = GRAPH_X + (WIFI_CH13 * GRAPH_WIDTH / ANA_CHANNELS);
 
-    // Draw dashed lines on spectrum
+    // Draw dashed lines on spectrum (1, 6, 11 magenta, 13 yellow)
     for (int y = GRAPH_Y; y < GRAPH_Y + GRAPH_HEIGHT; y += 4) {
-        tft.drawPixel(x1, y, TFT_MAGENTA);
-        tft.drawPixel(x6, y, TFT_MAGENTA);
-        tft.drawPixel(x11, y, TFT_MAGENTA);
+        tft.drawPixel(x1, y, ORANGE);
+        tft.drawPixel(x6, y, ORANGE);
+        tft.drawPixel(x11, y, ORANGE);
+        tft.drawPixel(x13, y, TFT_YELLOW);
     }
 
     // Also draw on waterfall area
@@ -2204,10 +2374,11 @@ void drawWiFiMarkers() {
         tft.drawPixel(x1, y, TFT_DARKGREY);
         tft.drawPixel(x6, y, TFT_DARKGREY);
         tft.drawPixel(x11, y, TFT_DARKGREY);
+        tft.drawPixel(x13, y, TFT_DARKGREY);
     }
 
     // Labels above spectrum
-    tft.setTextColor(TFT_MAGENTA, TFT_BLACK);
+    tft.setTextColor(ORANGE, TFT_BLACK);
     tft.setTextSize(1);
     tft.setCursor(x1 - 4, GRAPH_Y - 10);
     tft.print("1");
@@ -2215,6 +2386,9 @@ void drawWiFiMarkers() {
     tft.print("6");
     tft.setCursor(x11 - 8, GRAPH_Y - 10);
     tft.print("11");
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
+    tft.setCursor(x13 - 8, GRAPH_Y - 10);
+    tft.print("13");
 }
 
 void drawAxes() {
@@ -2229,9 +2403,9 @@ void drawAxes() {
     tft.setCursor(GRAPH_X - 5, GRAPH_Y + GRAPH_HEIGHT + 3);
     tft.print("2400");
     tft.setCursor(GRAPH_X + GRAPH_WIDTH/2 - 15, GRAPH_Y + GRAPH_HEIGHT + 3);
-    tft.print("2462");
+    tft.print("2442");
     tft.setCursor(GRAPH_X + GRAPH_WIDTH - 25, GRAPH_Y + GRAPH_HEIGHT + 3);
-    tft.print("2525");
+    tft.print("2484");
 
     // Divider line before waterfall
     tft.drawLine(0, WATERFALL_Y - 2, 240, WATERFALL_Y - 2, ORANGE);
@@ -2260,19 +2434,19 @@ void drawSpectrum() {
         int x = GRAPH_X + (i * GRAPH_WIDTH / ANA_CHANNELS);
 
         // Current level bar - scaled to visible range
-        int barHeight = (current_levels[i] * GRAPH_HEIGHT) / 8;
+        int barHeight = (current_levels[i] * GRAPH_HEIGHT) / 3;  // Taller bars
         if (barHeight < 3 && current_levels[i] > 0) barHeight = 3;  // Minimum visible
         if (barHeight > GRAPH_HEIGHT) barHeight = GRAPH_HEIGHT;
 
         if (barHeight > 0) {
-            // Draw gradient bar - SHREDDY TEAL at bottom to PINK at top
+            // HaleHound gradient - Teal to Pink
             for (int y = 0; y < barHeight; y++) {
                 float ratio = (float)y / (float)GRAPH_HEIGHT;
 
-                // Shreddy Teal (35, 210, 195) -> Shreddy Pink (255, 22, 160)
-                uint8_t r = 35 + (uint8_t)(ratio * (255 - 35));
-                uint8_t g = 210 - (uint8_t)(ratio * (210 - 22));
-                uint8_t b = 195 - (uint8_t)(ratio * (195 - 160));
+                // Teal RGB(0, 207, 255) -> Hot Pink RGB(255, 28, 82)
+                uint8_t r = 0 + (uint8_t)(ratio * 255);
+                uint8_t g = 207 - (uint8_t)(ratio * 179);
+                uint8_t b = 255 - (uint8_t)(ratio * 173);
 
                 uint16_t color = ((r & 0xF8) << 8) | ((g & 0xFC) << 3) | (b >> 3);
                 int drawY = GRAPH_Y + GRAPH_HEIGHT - barHeight + y;

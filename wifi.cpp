@@ -528,7 +528,7 @@ void output() {
   tft.print("[*] Configuring channel to ");
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
   tft.print("(");
-  tft.setTextColor(TFT_RED, TFT_BLACK);
+  tft.setTextColor(ORANGE, TFT_BLACK);
   tft.print(spamchannel);
   tft.setTextColor(TFT_CYAN, TFT_BLACK);
   tft.print(")");
@@ -614,7 +614,7 @@ void beaconSpam() {
 
     tft.setTextFont(1);
     tft.setTextSize(1);
-    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.setTextColor(ORANGE, TFT_BLACK);
     tft.fillRect(0, 40, tft.width(), tft.height(), TFT_BLACK);
     tft.setCursor(2, 30 + y_offset);
     tft.print("[!!] FUCK IT");
@@ -1030,8 +1030,8 @@ void checkButtonPress() {
     if (!stopScan) {
       stopScan = true;
       xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-      displayPrint("[!] Scanning Stopped", TFT_RED, true);
-      displayPrint("[!] Press [Select] to Exit", TFT_RED, false);
+      displayPrint("[!] Scanning Stopped", ORANGE, true);
+      displayPrint("[!] Press [Select] to Exit", ORANGE, false);
       xSemaphoreGive(tftSemaphore);
     } else {
       exitMode = true;
@@ -1056,7 +1056,7 @@ void snifferCallback(void* buf, wifi_promiscuous_pkt_type_t type) {
         if (memcmp(senderMAC, macList[i], 6) == 0) {
           deauth[i]++;
           xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-          displayPrint("[!] Deauth Attack on: " + ssidLists[i], TFT_RED, true);
+          displayPrint("[!] Deauth Attack on: " + ssidLists[i], ORANGE, true);
           xSemaphoreGive(tftSemaphore);
           break;
         }
@@ -1103,7 +1103,7 @@ void analyzeNetworks(int n) {
 
     if (deauth[i] > 5) {
       xSemaphoreTake(tftSemaphore, portMAX_DELAY);
-      displayPrint("[!!!] HIGH DEAUTH ATTACK on " + ssidLists[i] + " (" + String(deauth[i]) + " attacks)", TFT_RED, true);
+      displayPrint("[!!!] HIGH DEAUTH ATTACK on " + ssidLists[i] + " (" + String(deauth[i]) + " attacks)", ORANGE, true);
       xSemaphoreGive(tftSemaphore);
     }
   }
@@ -1208,15 +1208,15 @@ void runUI() {
             // Execute action after animation
             switch (activeIcon) {
                 case 0:
-                    displayPrint("[!] Scanning Stopped", TFT_RED, true);
-                    displayPrint("[!] Press [Select] to Exit", TFT_RED, false);
+                    displayPrint("[!] Scanning Stopped", ORANGE, true);
+                    displayPrint("[!] Press [Select] to Exit", ORANGE, false);
                     stopScan = true;
                     animationState = 0;
                     activeIcon = -1;
                     break;
                     
                 case 1: // Back icon action (exit to submenu)   
-                    displayPrint("[!] Scanning Stopped", TFT_RED, true);  
+                    displayPrint("[!] Scanning Stopped", ORANGE, true);  
                     stopScan = true;      
                     feature_exit_requested = true;
                     animationState = 0;
@@ -2141,8 +2141,8 @@ void drawCredList() {
       tft.setCursor(160, yOffset);
       tft.println(cred.ssid);
 
-      //tft.fillRect(225, yOffset - 3, 7, 7, TFT_RED);
-      tft.setTextColor(TFT_RED);
+      //tft.fillRect(225, yOffset - 3, 7, 7, ORANGE);
+      tft.setTextColor(ORANGE);
       tft.setCursor(223, yOffset - 1);
       tft.println("X");
 
@@ -3167,7 +3167,7 @@ void deautherSetup() {
     if (err != ESP_OK) {
         Serial.printf("WiFi init failed: %d\n", err);
         tft.setCursor(10, 70);
-        tft.setTextColor(TFT_RED);
+        tft.setTextColor(ORANGE);
         tft.println("WiFi init failed!");
         return;
     }
@@ -3187,7 +3187,7 @@ void deautherSetup() {
     if (err != ESP_OK) {
         Serial.printf("WiFi start failed: %d\n", err);
         tft.setCursor(10, 70);
-        tft.setTextColor(TFT_RED);
+        tft.setTextColor(ORANGE);
         tft.println("WiFi start failed!");
         return;
     }
@@ -3757,7 +3757,7 @@ void performSDUpdate() {
   tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
   tft.setTextSize(1);
   tft.println("SD Update");
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
   tft.setCursor(10, 30 + yshift);
   tft.println("Insert SD card with");
   tft.setCursor(10, 40 + yshift);
@@ -3812,7 +3812,7 @@ void performSDUpdate() {
     tft.setCursor(10, 30 + yshift);
     tft.println("Initializing SD...");
     if (!SD.begin(SD_CS_PIN)) {
-      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.setTextColor(ORANGE, TFT_BLACK);
       tft.setCursor(10, 40 + yshift);
       tft.println("X SD init failed!");
       tft.setCursor(10, 50 + yshift);
@@ -3832,12 +3832,12 @@ void performSDUpdate() {
       drawTabBar("", false, "", false, "Back", false);
       continue;
     }
-    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
     tft.setCursor(10, 40 + yshift);
     tft.println("SD card OK");
 
     if (!SD.exists(FIRMWARE_FILE)) {
-      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.setTextColor(ORANGE, TFT_BLACK);
       tft.setCursor(10, 30 + yshift);
       tft.println("X Firmware not found!");
       tft.setCursor(10, 40 + yshift);
@@ -3860,7 +3860,7 @@ void performSDUpdate() {
 
     File firmwareFile = SD.open(FIRMWARE_FILE, FILE_READ);
     if (!firmwareFile) {
-      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.setTextColor(ORANGE, TFT_BLACK);
       tft.setCursor(10, 30 + yshift);
       tft.println("X File open failed!");
       tft.setCursor(10, 40 + yshift);
@@ -3886,7 +3886,7 @@ void performSDUpdate() {
     tft.setCursor(10, 50 + yshift);
     tft.printf("Size: %u bytes\n", fileSize);
     if (!Update.begin(fileSize)) {
-      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.setTextColor(ORANGE, TFT_BLACK);
       tft.setCursor(10, 30 + yshift);
       tft.println("X Update init failed!");
       tft.setCursor(10, 40 + yshift);
@@ -3912,7 +3912,7 @@ void performSDUpdate() {
     tft.println("Updating...");
     size_t written = Update.writeStream(firmwareFile);
     if (written != fileSize) {
-      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.setTextColor(ORANGE, TFT_BLACK);
       tft.setCursor(10, 30 + yshift);
       tft.println("X Update failed!");
       tft.setCursor(10, 40 + yshift);
@@ -3933,7 +3933,7 @@ void performSDUpdate() {
       continue;
     }
 
-    tft.setTextColor(TFT_GREEN, TFT_BLACK);
+    tft.setTextColor(TFT_YELLOW, TFT_BLACK);
     tft.setCursor(10, 20 + yshift);
     tft.println("Update OK!");
     if (Update.end(true)) {
@@ -3943,7 +3943,7 @@ void performSDUpdate() {
       delay(2000);
       ESP.restart();
     } else {
-      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.setTextColor(ORANGE, TFT_BLACK);
       tft.setCursor(10, 30 + yshift);
       tft.println("X Finalize failed!");
       tft.setCursor(10, 40 + yshift);
@@ -4326,7 +4326,7 @@ void performWebOTAUpdate() {
     attempts++;
   }
   if (WiFi.status() != WL_CONNECTED) {
-    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.setTextColor(ORANGE, TFT_BLACK);
     tft.setCursor(10, 40 + yshift);
     tft.println("X Wi-Fi failed!");
     tft.setCursor(10, 50 + yshift);
@@ -4343,7 +4343,7 @@ void performWebOTAUpdate() {
     performWebOTAUpdate();
     return;
   }
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
   tft.setCursor(10, 40 + yshift);
   tft.println("Wi-Fi OK");
   tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
@@ -4358,7 +4358,7 @@ void performWebOTAUpdate() {
   tft.println("Pass: admin");
 
   if (!MDNS.begin(host)) {
-    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.setTextColor(ORANGE, TFT_BLACK);
     tft.setCursor(10, 40 + yshift);
     tft.println("X mDNS failed!");
     tft.setCursor(10, 50 + yshift);
@@ -4375,7 +4375,7 @@ void performWebOTAUpdate() {
     performWebOTAUpdate();
     return;
   }
-  tft.setTextColor(TFT_GREEN, TFT_BLACK);
+  tft.setTextColor(TFT_YELLOW, TFT_BLACK);
   tft.setCursor(10, 110 + yshift);
   tft.println("mDNS OK");
   tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
@@ -4399,7 +4399,7 @@ void performWebOTAUpdate() {
     if (success) {
       tft.fillRect(0, 37, 240, 320, TFT_BLACK);
       tft.setCursor(10, 10 + yshift);
-      tft.setTextColor(TFT_GREEN, TFT_BLACK);
+      tft.setTextColor(TFT_YELLOW, TFT_BLACK);
       tft.setTextSize(1);
       tft.println("Update OK!");
       tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
@@ -4410,7 +4410,7 @@ void performWebOTAUpdate() {
     } else {
       tft.fillRect(0, 37, 240, 320, TFT_BLACK);
       tft.setCursor(10, 10 + yshift);
-      tft.setTextColor(TFT_RED, TFT_BLACK);
+      tft.setTextColor(ORANGE, TFT_BLACK);
       tft.println("X Update Failed!");
       tft.setTextColor(SHREDDY_TEAL, TFT_BLACK);
       tft.setCursor(10, 20 + yshift);

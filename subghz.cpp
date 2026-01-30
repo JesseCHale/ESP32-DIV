@@ -328,10 +328,10 @@ void updateDisplay() {
     if (autoScanMode) {
         // In auto-scan mode - show current scan frequency with indicator
         if (autoScanPaused) {
-            tft.setTextColor(TFT_RED);  // Red = paused on signal
+            tft.setTextColor(ORANGE);  // Red = paused on signal
             tft.print("*");
         } else {
-            tft.setTextColor(TFT_GREEN);  // Green = actively scanning
+            tft.setTextColor(TFT_YELLOW);  // Green = actively scanning
         }
         tft.print(subghz_frequency_list[autoScanIndex] / 1000000.0, 2);
         tft.setTextColor(TFT_YELLOW);
@@ -530,7 +530,7 @@ String getUserInputName() {
           return inputName;
         } else {
           tft.fillRect(10, 80, 220, 10, TFT_BLACK);
-          tft.setTextColor(TFT_RED);
+          tft.setTextColor(ORANGE);
           tft.setTextSize(1);
           tft.setCursor(10, 85);
           tft.println("Name cannot be empty!");
@@ -1021,10 +1021,10 @@ void ReplayAttackSetup() {
 
    tft.setCursor(10, 125);
    if (ELECHOUSE_cc1101.getCC1101()) {
-       tft.setTextColor(TFT_GREEN);
+       tft.setTextColor(TFT_YELLOW);
        tft.println("CC1101: DETECTED");
    } else {
-       tft.setTextColor(TFT_RED);
+       tft.setTextColor(ORANGE);
        tft.println("CC1101: NOT DETECTED!");
    }
 
@@ -1102,7 +1102,7 @@ void ReplayAttackLoop() {
         tft.setCursor(170, 55);
         tft.setTextSize(1);
         if (liveRssi > -50) {
-            tft.setTextColor(TFT_GREEN);
+            tft.setTextColor(TFT_YELLOW);
         } else if (liveRssi > -70) {
             tft.setTextColor(TFT_YELLOW);
         } else {
@@ -1116,12 +1116,12 @@ void ReplayAttackLoop() {
         tft.setTextSize(1);
 
         // Mode indicator
-        tft.setTextColor(mode == 2 ? TFT_GREEN : TFT_RED);
+        tft.setTextColor(mode == 2 ? TFT_YELLOW : ORANGE);
         tft.printf("M:%d ", mode);  // Should be 2 for RX
 
         // RSSI with color
         if (liveRssi > -50) {
-            tft.setTextColor(TFT_GREEN);
+            tft.setTextColor(TFT_YELLOW);
         } else if (liveRssi > -70) {
             tft.setTextColor(TFT_YELLOW);
         } else {
@@ -1130,7 +1130,7 @@ void ReplayAttackLoop() {
         tft.printf("R:%d ", liveRssi);
 
         // Pin 26 (GDO2) state and transition count - RX data in async mode
-        tft.setTextColor(gdo2TransitionCount > 0 ? TFT_GREEN : TFT_RED);
+        tft.setTextColor(gdo2TransitionCount > 0 ? TFT_YELLOW : ORANGE);
         tft.printf("P26:%d T:%lu", currentPin, gdo2TransitionCount);
 
         // Serial debug with RCSwitch raw values
@@ -1736,7 +1736,7 @@ void updateDisplay() {
         tft.fillRect(0, 60 + yshift, progress, 4, ORANGE);
         // Blinking sweep indicator
         if (jammingRunning && millis() % 1000 < 500) {
-            tft.fillCircle(220, 22 + yshift, 2, TFT_GREEN);
+            tft.fillCircle(220, 22 + yshift, 2, TFT_YELLOW);
         } else {
             tft.fillCircle(220, 22 + yshift, 2, TFT_BLACK);  // Clear when off
         }
@@ -1751,7 +1751,7 @@ void updateDisplay() {
     tft.setTextColor(TFT_CYAN);
     tft.print("Mode:");
     tft.setCursor(165, 22 + yshift);
-    tft.setTextColor(continuousMode ? TFT_GREEN : TFT_YELLOW);
+    tft.setTextColor(continuousMode ? TFT_YELLOW : TFT_YELLOW);
     tft.print(continuousMode ? "Cont" : "Noise");
 
     // Status section
@@ -1760,11 +1760,11 @@ void updateDisplay() {
     tft.print("Status:");
     tft.setCursor(50, 42 + yshift);
     if (jammingRunning) {
-        tft.setTextColor(TFT_RED);
+        tft.setTextColor(ORANGE);
         tft.print("Jamming");
 
     } else {
-        tft.setTextColor(TFT_GREEN);
+        tft.setTextColor(TFT_YELLOW);
         tft.print("Idle   "); 
     }
 }
@@ -2906,7 +2906,7 @@ void updateBruteDisplay() {
     tft.setTextColor(TFT_CYAN, TFT_BLACK);
     tft.setCursor(130, 100);
     tft.print("Mode: ");
-    tft.setTextColor(useDeBruijn ? TFT_GREEN : TFT_YELLOW, TFT_BLACK);
+    tft.setTextColor(useDeBruijn ? TFT_YELLOW : TFT_YELLOW, TFT_BLACK);
     tft.print(useDeBruijn ? "DeBruijn" : "Sequential");
 
     // Progress - calculate differently for De Bruijn vs Sequential mode
@@ -2951,8 +2951,8 @@ void updateBruteDisplay() {
     tft.drawRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2, TFT_WHITE);
     tft.fillRect(barX, barY, barWidth, barHeight, TFT_DARKGREY);
 
-    uint16_t barColor = TFT_GREEN;
-    if (progress < 33) barColor = TFT_RED;
+    uint16_t barColor = TFT_YELLOW;
+    if (progress < 33) barColor = ORANGE;
     else if (progress < 66) barColor = TFT_YELLOW;
 
     if (fillWidth > 0) {
@@ -2984,11 +2984,11 @@ void updateBruteDisplay() {
             tft.setTextColor(TFT_YELLOW, TFT_BLACK);
             tft.print("PAUSED - DOWN to resume, UP to stop");
         } else {
-            tft.setTextColor(TFT_RED, TFT_BLACK);
+            tft.setTextColor(ORANGE, TFT_BLACK);
             tft.print("ATTACKING - UP=Stop DOWN=Pause");
         }
     } else {
-        tft.setTextColor(TFT_GREEN, TFT_BLACK);
+        tft.setTextColor(TFT_YELLOW, TFT_BLACK);
         tft.print("READY - UP=Start");
     }
 }
@@ -3003,7 +3003,7 @@ void drawHeader() {
     tft.print("SUB-GHz BRUTE FORCE");
 
     // Warning
-    tft.setTextColor(TFT_RED, TFT_BLACK);
+    tft.setTextColor(ORANGE, TFT_BLACK);
     tft.setCursor(30, 20);
     tft.print("AUTHORIZED TESTING ONLY");
 

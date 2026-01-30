@@ -40,10 +40,10 @@ const uint16_t DARK_GRAY = HALEHOUND_GUNMETAL;
 
 void displaySubmenu();
 
-extern bool in_sub_menu;                
-extern bool feature_active;             
-extern bool submenu_initialized;        
-extern bool is_main_menu;              
+extern bool in_sub_menu;
+extern bool feature_active;
+extern bool submenu_initialized;
+extern bool is_main_menu;
 extern bool feature_exit_requested;
 
 

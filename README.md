@@ -37,6 +37,7 @@
 ![Version](https://img.shields.io/badge/Version-2.4-green)
 ![License](https://img.shields.io/badge/License-Educational-orange)
 ![Status](https://img.shields.io/badge/Status-Ready%20to%20Flash-brightgreen)
+[![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/HPyVqAy7)
 
 > Multi-radio offensive security platform with WiFi, BLE, SubGHz (CC1101), and 2.4GHz (NRF24L01+) capabilities.
 

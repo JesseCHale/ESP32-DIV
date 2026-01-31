@@ -305,8 +305,8 @@ void runUI() {
   if (millis() - lastTouchCheck >= touchCheckInterval) {
     if (ts.touched() && feature_active) {
       TS_Point p = ts.getPoint();
-      int x = ::map(p.x, 300, 3800, 0, SCREEN_WIDTH - 1);
-      int y = ::map(p.y, 3800, 300, 0, SCREEN_HEIGHT - 1);
+      int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
+      int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREEN_HEIGHT - 1);
 
       if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
         for (int i = 0; i < ICON_NUM; i++) {
@@ -821,8 +821,8 @@ void runUI() {
   if (millis() - lastTouchCheck >= touchCheckInterval) {
     if (ts.touched() && feature_active) {
       TS_Point p = ts.getPoint();
-      int x = ::map(p.x, 300, 3800, 0, SCREEN_WIDTH - 1);
-      int y = ::map(p.y, 3800, 300, 0, SCREENHEIGHT - 1);
+      int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
+      int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
       if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
         for (int i = 0; i < ICON_NUM; i++) {
@@ -1237,8 +1237,8 @@ void runUI() {
     if (millis() - lastTouchCheck >= touchCheckInterval) {
         if (ts.touched() && feature_active) {
             TS_Point p = ts.getPoint();
-            int x = ::map(p.x, 300, 3800, 0, SCREEN_WIDTH - 1);
-            int y = ::map(p.y, 3800, 300, 0, SCREENHEIGHT - 1);
+            int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
+            int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
             if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
                 for (int i = 0; i < ICON_NUM; i++) {
@@ -1648,8 +1648,8 @@ void runUI() {
     if (millis() - lastTouchCheck >= touchCheckInterval) {
         if (ts.touched() && feature_active) {
             TS_Point p = ts.getPoint();
-            int x = ::map(p.x, 300, 3800, 0, SCREEN_WIDTH - 1);
-            int y = ::map(p.y, 3800, 300, 0, SCREENHEIGHT - 1);
+            int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
+            int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
             if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
                 for (int i = 0; i < ICON_NUM; i++) {
@@ -2441,8 +2441,8 @@ void runUI() {
   if (millis() - lastTouchCheck >= touchCheckInterval) {
     if (ts.touched() && feature_active) {
       TS_Point p = ts.getPoint();
-      int x = ::map(p.x, 300, 3800, 0, SCREEN_WIDTH - 1);
-      int y = ::map(p.y, 3800, 300, 0, SCREENHEIGHT - 1);
+      int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
+      int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
      if (currentScreen == KEYBOARD) {
       handleKeyboard(x, y);
@@ -2840,8 +2840,8 @@ void handleTouch() {
 
     TS_Point p = ts.getPoint();
     
-    int x = ::map(p.x, 300, 3800, 0, SCREEN_WIDTH - 1);
-    int y = ::map(p.y, 3800, 300, 0, SCREEN_HEIGHT - 1);
+    int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
+    int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREEN_HEIGHT - 1);
 
     bool redraw = false;
     if (selected_ap_index == -1) {
@@ -3107,8 +3107,8 @@ void runUI() {
   if (millis() - lastTouchCheck >= touchCheckInterval) {
     if (ts.touched() && feature_active) {
       TS_Point p = ts.getPoint();
-      int x = ::map(p.x, 300, 3800, 0, SCREEN_WIDTH - 1);
-      int y = ::map(p.y, 3800, 300, 0, SCREENHEIGHT - 1);
+      int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
+      int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
       if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
         for (int i = 0; i < ICON_NUM; i++) {
@@ -3674,8 +3674,8 @@ void runUI() {
   if (millis() - lastTouchCheck >= touchCheckInterval) {
     if (ts.touched() && feature_active) {
       TS_Point p = ts.getPoint();
-      int x = ::map(p.x, 300, 3800, 0, SCREEN_WIDTH - 1);
-      int y = ::map(p.y, 3800, 300, 0, SCREENHEIGHT - 1);
+      int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
+      int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
       if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
         for (int i = 0; i < ICON_NUM; i++) {

@@ -2162,7 +2162,7 @@ void displayDeviceInfo() {
 
     tft.setCursor(10, y); tft.print("Device: ESP32-DIV");
     y += 25;
-    tft.setCursor(10, y); tft.print("Version: v2.4 - HaleHound");
+    tft.setCursor(10, y); tft.print("Version: v2.4.5 - HaleHound");
     y += 25;
     tft.setCursor(10, y); tft.print("By: HaleHound (JMFH)");
     y += 25;
@@ -2786,7 +2786,7 @@ void handleAboutPage() {
   int text_x = 10;
   int text_y = 130;
   tft.setCursor(text_x, text_y);
-  tft.println("- ESP32-DIV v2.4");
+  tft.println("- ESP32-DIV v2.4.5");
   text_y += lineHeight;
   tft.setCursor(text_x, text_y);
   tft.println("- HaleHound Edition");

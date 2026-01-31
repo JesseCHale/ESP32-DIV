@@ -40,10 +40,10 @@
               ?$$$?-                                       -?$$$?
 ```
 
-# ESP32-DIV v2.4 — HaleHound Edition
+# ESP32-DIV v2.4.5 — HaleHound Edition
 
 ![ESP32](https://img.shields.io/badge/ESP32--WROOM--32U-blue?logo=espressif)
-![Version](https://img.shields.io/badge/Version-2.4-green)
+![Version](https://img.shields.io/badge/Version-2.4.5-green)
 ![License](https://img.shields.io/badge/License-Educational-orange)
 ![Status](https://img.shields.io/badge/Status-Ready%20to%20Flash-brightgreen)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/HPyVqAy7)
@@ -57,6 +57,32 @@
 If you have color vision deficiency, download the **Duggie Edition** instead — same features, colorblind-accessible palette.
 
 [Download Duggie Edition](https://github.com/JesseCHale/ESP32-DIV/releases/tag/v2.4)
+
+---
+
+## What's New in v2.4.5 (January 31, 2026)
+
+### Touch Calibration Constants
+
+Touch calibration now uses centralized constants instead of hardcoded values scattered throughout the codebase.
+
+**The Change:**
+All touch coordinate mapping now uses constants from `Touchscreen.h`:
+```cpp
+int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
+int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREEN_HEIGHT - 1);
+```
+
+**Why This Matters:**
+- **DIY/Breadboard builds** — If your touch is off, just edit `Touchscreen.h`
+- **One place to calibrate** — No more hunting through 4 different .cpp files
+- **Community request** — Thanks @IgorMH for the suggestion
+
+**Files Updated:**
+- `bluetooth.cpp`
+- `wifi.cpp`
+- `subghz.cpp`
+- `utils.cpp`
 
 ---
 

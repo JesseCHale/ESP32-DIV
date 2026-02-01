@@ -45,10 +45,13 @@ Copyright (c) 2023 CiferTech (original ESP32-DIV foundation)
 Copyright (c) 2026 JMFH (HaleHound Edition - complete rewrite)
 
 HaleHound Edition represents a substantial rewrite including:
-- 27 critical bug fixes
+- 30+ bug fixes (including v2.5.0 stability improvements)
 - 8 new features (Spectrum Analyzer, ProtoKill, WLAN Jammer, etc.)
 - SPI bus architecture overhaul
+- WiFi Deauther complete overhaul
 - Scanner/Spectrum Analyzer complete redesign
+- Centralized touch calibration for DIY builds
+- Skull wave activity spinner
 - Duggie Edition accessibility support
 - Continued V1 board support
 

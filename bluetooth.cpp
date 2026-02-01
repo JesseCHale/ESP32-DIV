@@ -39,7 +39,13 @@ void cleanupNRF24() {
     pinMode(27, OUTPUT);
     digitalWrite(27, HIGH);  // CSN_PIN_2 HIGH = deselected
 
-    Serial.println("[NRF24] Cleanup complete - GPIO 5 released for SD card");
+    // Release GPIO 16 and 26 for CC1101 SubGHz to reclaim
+    // These pins are shared: GPIO 16 = CC1101 GDO0 / NRF24 CE_PIN_1
+    //                        GPIO 26 = CC1101 GDO2 / NRF24 CE_PIN_2
+    pinMode(16, INPUT);  // Release for CC1101 GDO0
+    pinMode(26, INPUT);  // Release for CC1101 GDO2
+
+    Serial.println("[NRF24] Cleanup complete - GPIO 5/16/26 released");
 }
 
 /*
@@ -569,9 +575,10 @@ void runUI() {
       int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
       int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
-      if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
+      if (y >= STATUS_BAR_Y_OFFSET && y <= STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT + 5) {
         for (int i = 0; i < ICON_NUM; i++) {
-          if (x > iconX[i] && x < iconX[i] + ICON_SIZE) {
+          // Expanded hit box: 5px padding on each side for easier touch
+          if (x >= iconX[i] - 5 && x <= iconX[i] + ICON_SIZE + 5) {
             if (icons[i] != NULL && animationState == 0) {
               tft.drawBitmap(iconX[i], iconY, icons[i], ICON_SIZE, ICON_SIZE, TFT_BLACK);
               animationState = 1;
@@ -741,9 +748,10 @@ void runUI() {
       int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
       int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
-      if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
+      if (y >= STATUS_BAR_Y_OFFSET && y <= STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT + 5) {
         for (int i = 0; i < ICON_NUM; i++) {
-          if (x > iconX[i] && x < iconX[i] + ICON_SIZE) {
+          // Expanded hit box: 5px padding on each side for easier touch
+          if (x >= iconX[i] - 5 && x <= iconX[i] + ICON_SIZE + 5) {
             if (icons[i] != NULL && animationState == 0) {
               tft.drawBitmap(iconX[i], iconY, icons[i], ICON_SIZE, ICON_SIZE, TFT_BLACK);
               animationState = 1;
@@ -1457,9 +1465,10 @@ void runUI() {
       int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
       int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
-      if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
+      if (y >= STATUS_BAR_Y_OFFSET && y <= STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT + 5) {
         for (int i = 0; i < ICON_NUM; i++) {
-          if (x > iconX[i] && x < iconX[i] + ICON_SIZE) {
+          // Expanded hit box: 5px padding on each side for easier touch
+          if (x >= iconX[i] - 5 && x <= iconX[i] + ICON_SIZE + 5) {
             if (icons[i] != NULL && animationState == 0) {
               tft.drawBitmap(iconX[i], iconY, icons[i], ICON_SIZE, ICON_SIZE, TFT_BLACK);
               animationState = 1;
@@ -1795,9 +1804,10 @@ void runUI() {
       int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
       int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
-      if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
+      if (y >= STATUS_BAR_Y_OFFSET && y <= STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT + 5) {
         for (int i = 0; i < ICON_NUM; i++) {
-          if (x > iconX[i] && x < iconX[i] + ICON_SIZE) {
+          // Expanded hit box: 5px padding on each side for easier touch
+          if (x >= iconX[i] - 5 && x <= iconX[i] + ICON_SIZE + 5) {
             if (icons[i] != NULL && animationState == 0) {
               tft.drawBitmap(iconX[i], iconY, icons[i], ICON_SIZE, ICON_SIZE, TFT_BLACK);
               animationState = 1;
@@ -4347,9 +4357,10 @@ void runUI() {
       int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREENHEIGHT - 1);
 
       // Handle icon bar touches
-      if (y > STATUS_BAR_Y_OFFSET && y < STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT) {
+      if (y >= STATUS_BAR_Y_OFFSET && y <= STATUS_BAR_Y_OFFSET + STATUS_BAR_HEIGHT + 5) {
         for (int i = 0; i < ICON_NUM; i++) {
-          if (x > iconX[i] && x < iconX[i] + ICON_SIZE) {
+          // Expanded hit box: 5px padding on each side for easier touch
+          if (x >= iconX[i] - 5 && x <= iconX[i] + ICON_SIZE + 5) {
             if (icons[i] != NULL && animationState == 0) {
               tft.drawBitmap(iconX[i], iconY, icons[i], ICON_SIZE, ICON_SIZE, TFT_BLACK);
               animationState = 1;

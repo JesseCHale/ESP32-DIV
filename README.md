@@ -40,10 +40,10 @@
               ?$$$?-                                       -?$$$?
 ```
 
-# ESP32-DIV v2.4.5 — HaleHound Edition
+# ESP32-DIV v2.5.0 — HaleHound Edition
 
 ![ESP32](https://img.shields.io/badge/ESP32--WROOM--32U-blue?logo=espressif)
-![Version](https://img.shields.io/badge/Version-2.4.5-green)
+![Version](https://img.shields.io/badge/Version-2.5.0-green)
 ![License](https://img.shields.io/badge/License-Educational-orange)
 ![Status](https://img.shields.io/badge/Status-Ready%20to%20Flash-brightgreen)
 [![Discord](https://img.shields.io/badge/Discord-Join%20Server-5865F2?logo=discord&logoColor=white)](https://discord.gg/HPyVqAy7)
@@ -56,7 +56,34 @@
 
 If you have color vision deficiency, download the **Duggie Edition** instead — same features, colorblind-accessible palette.
 
-[Download Duggie Edition](https://github.com/JesseCHale/ESP32-DIV/releases/tag/v2.4)
+[Download Duggie Edition](https://github.com/JesseCHale/ESP32-DIV/releases/tag/v2.5.0)
+
+---
+
+## What's New in v2.5.0 (January 31, 2026)
+
+### Captive Portal Keyboard Fix
+
+Fixed keyboard shift behavior in Captive Portal. Thanks to [TBirb](https://github.com/TBirb) for finding this bug.
+
+### NRF24 Pin Release for SubGHz Switching
+
+- **GPIO 16 and 26 now released** when switching from 2.4GHz to SubGHz mode
+- Eliminates SPI bus conflicts between NRF24 and CC1101
+
+### WiFi Deauther Improvements
+
+- **Touch debounce** — No more accidental double-taps
+- **Network selection fix** — Proper highlight and selection behavior
+- **Packet burst selector** — Choose burst count before attack
+- **Attack restart** — Restart attack without returning to menu
+- **Skull wave spinner** — Animated feedback during active attack
+
+### Stability Fixes
+
+- **Heap threshold** — Lowered from 80KB to 20KB for aggressive memory recovery
+- **Channel check optimization** — Reduced unnecessary WiFi channel switches
+- **2.4GHz touch bounds fix** — Back button now works correctly in 2.4GHz menu
 
 ---
 
@@ -256,7 +283,7 @@ This edition features a complete visual overhaul:
 - **Skull Menu Icons** — 8 custom 16x16 skull-themed navigation icons
 - **Splash Screen** — Full-screen HaleHound branded startup
 - **Transparent Buttons** — Clean button styling with cyan/magenta borders
-- **Updated Branding** — "v2.4 - HaleHound Edition" displayed on device
+- **Updated Branding** — "v2.5.0 - HaleHound Edition" displayed on device
 
 ---
 

@@ -1025,13 +1025,29 @@ void displayPrint(String text, uint16_t color, bool extraSpace = false) {
 }
 
 void checkButtonPress() {
+  // Check physical button
   if (!pcf.digitalRead(BTN_UP)) {
     vTaskDelay(200 / portTICK_PERIOD_MS);
     if (!stopScan) {
       stopScan = true;
       xSemaphoreTake(tftSemaphore, portMAX_DELAY);
       displayPrint("[!] Scanning Stopped", ORANGE, true);
-      displayPrint("[!] Press [Select] to Exit", ORANGE, false);
+      displayPrint("[!] Touch or [Select] to Exit", ORANGE, false);
+      xSemaphoreGive(tftSemaphore);
+    } else {
+      exitMode = true;
+    }
+  }
+
+  // Check touchscreen for exit
+  if (ts.touched()) {
+    TS_Point p = ts.getPoint();
+    vTaskDelay(200 / portTICK_PERIOD_MS);
+    if (!stopScan) {
+      stopScan = true;
+      xSemaphoreTake(tftSemaphore, portMAX_DELAY);
+      displayPrint("[!] Scanning Stopped", ORANGE, true);
+      displayPrint("[!] Touch or [Select] to Exit", ORANGE, false);
       xSemaphoreGive(tftSemaphore);
     } else {
       exitMode = true;
@@ -1768,16 +1784,24 @@ Screen currentScreen = MAIN_MENU;
 int credPage = 0;
 
 bool keyboardActive = false;
+bool shiftActive = false;
 String inputSSID = "";
 const int keyWidth = 22;
 const int keyHeight = 18;
 const int keySpacing = 2;
-const char* keyboardLayout[] = {
+const char* keyboardLower[] = {
   "1234567890",
   "qwertyuiop",
-  "asdfghjkl ",
+  "asdfghjkl^",
   "zxcvbnm_<-"
 };
+const char* keyboardUpper[] = {
+  "1234567890",
+  "QWERTYUIOP",
+  "ASDFGHJKL^",
+  "ZXCVBNM_<-"
+};
+const char** keyboardLayout = keyboardLower;
 bool cursorState = false;
 unsigned long lastCursorToggle = 0;
 
@@ -2255,6 +2279,12 @@ void handleKeyboard(int x, int y) {
           }
         } else if (c == '-') {
           inputSSID = "";
+        } else if (c == '^') {
+          // Shift key - toggle case
+          shiftActive = !shiftActive;
+          keyboardLayout = shiftActive ? keyboardUpper : keyboardLower;
+          drawKeyboard();
+          return;
         } else if (c != ' ') {
           inputSSID += c;
         }
@@ -2559,7 +2589,8 @@ bool scanning = false;
 uint32_t last_packet_time = 0;
 int current_page = 0;
 int highlightedIndex = 0;  // For button navigation
-const int networks_per_page = 14; 
+const int networks_per_page = 14;
+int packets_per_burst = 10;  // Configurable packets per burst (default 10) 
 
 // Override Wi-Fi sanity check
 extern "C" int ieee80211_raw_frame_sanity_check(int32_t arg, int32_t arg2, int32_t arg3) {
@@ -2784,6 +2815,105 @@ void resetWifi() {
     consecutive_failures = 0;
 }
 
+// Skull spinner state
+int skullFrame = 0;
+
+// All 8 skull menu icons in array
+const unsigned char* skullIcons[] = {
+    bitmap_icon_skull_wifi,
+    bitmap_icon_skull_bluetooth,
+    bitmap_icon_skull_jammer,
+    bitmap_icon_skull_subghz,
+    bitmap_icon_skull_ir,
+    bitmap_icon_skull_tools,
+    bitmap_icon_skull_setting,
+    bitmap_icon_skull_about
+};
+const int numSkulls = 8;
+
+// Draw row of skulls that flash in sequence - teal to pink wave
+void drawSkullSpinner() {
+    const int startX = 28;  // Center 8 skulls (8*16=128, (240-128)/2 = 56, but tighter)
+    const int skullY = 195;
+    const int spacing = 26;  // 16px icon + 10px gap
+
+    if (attack_running) {
+        // Wave effect - each skull gets a different phase
+        for (int i = 0; i < numSkulls; i++) {
+            int phase = (skullFrame + i) % 8;
+
+            // Gradient from teal to pink based on phase
+            uint16_t skullColor;
+            if (phase < 4) {
+                // Teal to pink transition
+                float ratio = phase / 3.0f;
+                uint8_t r = (uint8_t)(ratio * 255);
+                uint8_t g = 207 - (uint8_t)(ratio * (207 - 28));
+                uint8_t b = 255 - (uint8_t)(ratio * (255 - 82));
+                skullColor = tft.color565(r, g, b);
+            } else {
+                // Pink to teal transition
+                float ratio = (phase - 4) / 3.0f;
+                uint8_t r = 255 - (uint8_t)(ratio * 255);
+                uint8_t g = 28 + (uint8_t)(ratio * (207 - 28));
+                uint8_t b = 82 + (uint8_t)(ratio * (255 - 82));
+                skullColor = tft.color565(r, g, b);
+            }
+
+            int x = startX + (i * spacing);
+            tft.fillRect(x, skullY, 16, 16, TFT_BLACK);
+            tft.drawBitmap(x, skullY, skullIcons[i], 16, 16, skullColor);
+        }
+        skullFrame++;
+    } else {
+        // Idle - all gray
+        for (int i = 0; i < numSkulls; i++) {
+            int x = startX + (i * spacing);
+            tft.fillRect(x, skullY, 16, 16, TFT_BLACK);
+            tft.drawBitmap(x, skullY, skullIcons[i], 16, 16, DARK_GRAY);
+        }
+    }
+}
+
+// Draw label above skulls
+void drawSpinnerLabel() {
+    tft.fillRect(10, 215, 220, 15, TFT_BLACK);
+    tft.setCursor(85, 218);
+    tft.setTextColor(attack_running ? ORANGE : DARK_GRAY);
+    tft.setTextSize(1);
+    tft.print(attack_running ? "ATTACKING" : "IDLE");
+}
+
+// Lightweight stats update - only redraws stats area, not whole screen
+void updateAttackStats() {
+    char buf[64];
+
+    // Clear stats area only (y 100 to 150)
+    tft.fillRect(10, 100, 200, 50, TFT_BLACK);
+
+    // Status
+    tft.setCursor(10, 100);
+    tft.setTextColor(attack_running ? ORANGE : DARK_GRAY);
+    tft.println(attack_running ? "Status: Running" : "Status: Stopped");
+
+    // Packets
+    snprintf(buf, sizeof(buf), "Packets: %u", packet_count);
+    tft.setCursor(10, 115);
+    tft.setTextColor(WHITE);
+    tft.println(buf);
+
+    // Success rate
+    float success_rate = (packet_count > 0) ? (float)success_count / packet_count * 100 : 0;
+    snprintf(buf, sizeof(buf), "Success: %.1f%%", success_rate);
+    tft.setCursor(10, 130);
+    tft.println(buf);
+
+    // Heap
+    snprintf(buf, sizeof(buf), "Heap: %u", ESP.getFreeHeap());
+    tft.setCursor(10, 145);
+    tft.println(buf);
+}
+
 void drawAttackScreen() {
     tft.drawLine(0, 19, 240, 19, SHREDDY_TEAL);
     tft.fillRect(0, 37, 240, 320, TFT_BLACK);
@@ -2831,28 +2961,67 @@ void drawAttackScreen() {
     tft.setCursor(10, 145);
     tft.println(buf);
 
+    // Packet burst selector: [-] count [+]
+    tft.setCursor(10, 170);
+    tft.setTextColor(WHITE);
+    tft.print("Burst: ");
+
+    // Draw [-] button
+    tft.fillRect(70, 165, 30, 20, DARK_GRAY);
+    tft.drawRect(70, 165, 30, 20, WHITE);
+    tft.setCursor(82, 170);
+    tft.setTextColor(WHITE);
+    tft.print("-");
+
+    // Draw count
+    tft.fillRect(105, 165, 40, 20, TFT_BLACK);
+    tft.setCursor(115, 170);
+    tft.setTextColor(ORANGE);
+    snprintf(buf, sizeof(buf), "%d", packets_per_burst);
+    tft.print(buf);
+
+    // Draw [+] button
+    tft.fillRect(150, 165, 30, 20, DARK_GRAY);
+    tft.drawRect(150, 165, 30, 20, WHITE);
+    tft.setCursor(162, 170);
+    tft.setTextColor(WHITE);
+    tft.print("+");
+
+    // Skull activity indicator
+    drawSkullSpinner();
+    drawSpinnerLabel();
+
     const char* buttons[] = {attack_running ? "Stop" : "Start", "Back"};
-    drawTabBar(buttons[0], false, "", true, buttons[1], false); 
+    drawTabBar(buttons[0], false, "", true, buttons[1], false);
 }
 
 void handleTouch() {
+    static unsigned long lastTouchTime = 0;
+    const unsigned long touchDebounce = 300;  // 300ms debounce
+
     if (!ts.touched()) return;
 
+    // Debounce - ignore rapid touches
+    if (millis() - lastTouchTime < touchDebounce) return;
+    lastTouchTime = millis();
+
     TS_Point p = ts.getPoint();
-    
+
     int x = ::map(p.x, TS_MINX, TS_MAXX, 0, SCREEN_WIDTH - 1);
     int y = ::map(p.y, TS_MAXY, TS_MINY, 0, SCREEN_HEIGHT - 1);
 
     bool redraw = false;
+
     if (selected_ap_index == -1) {
-        if (!scanning && y >= 60 && y < 270 && network_count > 0) {
-            int index = (y - 60) / 15 + (current_page * networks_per_page); 
+        // Network list starts at y=70 (after "Networks:" label at y=50)
+        if (!scanning && y >= 70 && y < 280 && network_count > 0) {
+            int index = (y - 70) / 15 + (current_page * networks_per_page);
             if (index >= 0 && index < network_count) {
                 selected_ap_index = index;
                 selectedAp = ap_list[index];
                 selectedChannel = ap_list[index].primary;
-                drawScanScreen(); 
-                delay(50); 
+                drawScanScreen();
+                delay(50);
                 drawAttackScreen();
             }
         } else if (!scanning && y >= 290 && y <= 320) {
@@ -2873,8 +3042,7 @@ void handleTouch() {
                     redraw = true;
                 } 
             } else {
-                // Touch zones must match drawTabBar button positions exactly
-                // Rescan: x=0-57, Prev: x=117-174, Next: x=177-234
+                // Touch zones: Rescan: x=0-57, Prev: x=117-174, Next: x=177-234
                 if (x >= 0 && x <= 57) {
                     drawButton(0, 304, 57, 16, "Rescan", true, false);
                     delay(50);
@@ -2910,11 +3078,39 @@ void handleTouch() {
             }
         }
     } else {
-        if (y >= 290 && y <= 320) {
+        // Attack screen touch handling
+        // [-] button: decrease packet burst count
+        if (y >= 165 && y <= 185 && x >= 70 && x <= 100) {
+            if (packets_per_burst > 1) {
+                packets_per_burst -= (packets_per_burst >= 10) ? 5 : 1;
+                if (packets_per_burst < 1) packets_per_burst = 1;
+                drawAttackScreen();
+                redraw = true;
+            }
+        }
+        // [+] button: increase packet burst count
+        else if (y >= 165 && y <= 185 && x >= 150 && x <= 180) {
+            if (packets_per_burst < 100) {
+                packets_per_burst += (packets_per_burst >= 10) ? 5 : 1;
+                if (packets_per_burst > 100) packets_per_burst = 100;
+                drawAttackScreen();
+                redraw = true;
+            }
+        }
+        // Bottom button bar
+        else if (y >= 290 && y <= 320) {
             if (x >= 0 && x <= 57) {
                 drawButton(0, 304, 57, 16, attack_running ? "Stop" : "Start", true, false);
                 attack_running = !attack_running;
-                if (!attack_running) {
+                if (attack_running) {
+                    // Starting new attack - reset all counters
+                    packet_count = 0;
+                    success_count = 0;
+                    consecutive_failures = 0;
+                    last_packet_time = 0;
+                    skullFrame = 0;
+                } else {
+                    // Stopping attack
                     last_packet_time = 0;
                 }
                 drawAttackScreen();
@@ -3231,59 +3427,52 @@ void deautherLoop() {
 
     // Packet transmission
     uint32_t current_time = millis();
+
     if (attack_running && selected_ap_index != -1) {
         uint32_t heap = ESP.getFreeHeap();
-        if (heap < 80000) {
+        if (heap < 20000) {
             attack_running = false;
-            last_packet_time = 0; // Reset packet timing
+            last_packet_time = 0;
             drawAttackScreen();
-            delay(3000);
+            delay(1000);
             return;
         }
 
         if (consecutive_failures > 10) {
             resetWifi();
-            last_packet_time = 0; // Reset packet timing
-            delay(3000);
+            last_packet_time = 0;
+            delay(1000);
             return;
         }
 
-        // Send packets at 100ms intervals, but check attack_running each time
+        // Send packet burst at 100ms intervals
         if (current_time - last_packet_time >= 100 && attack_running) {
-            wsl_bypasser_send_deauth_frame(&selectedAp, selectedChannel);
+            for (int i = 0; i < packets_per_burst && attack_running; i++) {
+                wsl_bypasser_send_deauth_frame(&selectedAp, selectedChannel);
+                if (i < packets_per_burst - 1) delay(1);
+            }
             last_packet_time = current_time;
         }
     }
 
-    static uint32_t last_channel_check = 0;
-    if (attack_running && current_time - last_channel_check > 15000) { // Every 15s
-        uint8_t new_channel;
-        if (checkApChannel(selectedAp.bssid, &new_channel)) {
-            if (new_channel != selectedChannel) {
-                selectedChannel = new_channel;
-                wifi_config_t ap_config = {0};
-                strncpy((char*)ap_config.ap.ssid, "ESP32-DIV", sizeof(ap_config.ap.ssid));
-                ap_config.ap.ssid_len = strlen("ESP32-DIV");
-                strncpy((char*)ap_config.ap.password, "deauth123", sizeof(ap_config.ap.password));
-                ap_config.ap.authmode = WIFI_AUTH_WPA2_PSK;
-                ap_config.ap.ssid_hidden = 0;
-                ap_config.ap.max_connection = 4;
-                ap_config.ap.beacon_interval = 100;
-                ap_config.ap.channel = selectedChannel;
-                esp_err_t ch_cfg_err = esp_wifi_set_config(WIFI_IF_AP, &ap_config);
-                if (ch_cfg_err != ESP_OK) {
-                    // Config failed, don't crash - just continue on current channel
-                }
-            }
-        }
-        last_channel_check = current_time;
+    // Channel check disabled - causes blocking WiFi scan that freezes display
+    // Most targets don't hop channels anyway
+    // static uint32_t last_channel_check = 0;
+    // if (attack_running && current_time - last_channel_check > 15000) { ... }
+
+    // Skull spinner - pulse every 500ms
+    static uint32_t last_anim_time = 0;
+    if (attack_running && current_time - last_anim_time > 500) {
+        drawSkullSpinner();
+        last_anim_time = current_time;
     }
 
+    // Stats text refresh - every 1 second (much less CPU intensive)
     static uint32_t last_status_time = 0;
-    if (attack_running && current_time - last_status_time > 2000) { // Every 2s
-        drawAttackScreen();
+    if (attack_running && current_time - last_status_time > 1000) {
+        updateAttackStats();
         last_status_time = current_time;
-      }
+    }
   }
 }
 

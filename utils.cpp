@@ -388,7 +388,7 @@ void displayLogo(uint16_t color, int displayTime) {
 
   // Version line
   tft.setTextFont(2);  // Font 2 = 16px
-  String version = "v2.4 - HaleHound Edition";
+  String version = "v2.5.0 - HaleHound Edition";
   int16_t versionWidth = tft.textWidth(version);
   tft.setCursor((screenWidth - versionWidth) / 2, 285);
   tft.print(version);
@@ -401,7 +401,7 @@ void displayLogo(uint16_t color, int displayTime) {
   tft.print(credit);
 
   Serial.println("==========================================");
-  Serial.println("ESP32-DIV v2.4 - HaleHound Edition        ");
+  Serial.println("ESP32-DIV v2.5.0 - HaleHound Edition      ");
   Serial.println("Developed by: HaleHound (JMFH)            ");
   Serial.println("Original by:  CiferTech                   ");
   Serial.println("GitHub:       github.com/JesseCHale       ");

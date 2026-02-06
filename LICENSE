@@ -42,7 +42,7 @@
                ESP32-DIV FIRMWARE - HALEHOUND EDITION
 ================================================================================
   Repository:   https://github.com/JesseCHale/ESP32-DIV
-  Author:       Jesse C. Hale (JesseCHale)
+  Author:       HaleHound (JesseCHale)
   Website:      https://github.com/JesseCHale
 ================================================================================
 
@@ -50,7 +50,7 @@
                               MIT LICENSE
 
 Copyright (c) 2023 CiferTech (original ESP32-DIV foundation)
-Copyright (c) 2026 Jesse C. Hale (HaleHound Edition - substantial rewrite)
+Copyright (c) 2026 HaleHound (HaleHound Edition - substantial rewrite)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

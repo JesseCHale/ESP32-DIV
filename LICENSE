@@ -1,4 +1,3 @@
-```
               _                                                   _
          .k$$$$$g,                                           ,g$$$$$k.
       .k$$$$$$$$$$$a.                                     .a$$$$$$$$$$$k.
@@ -38,22 +37,20 @@
      '*?- '?$$a louSxuS?                               ?xuSxuol a$$?' -?*'
            i$$$$$$$$$$$S                               S$$$$$$$$$$$i
               ?$$$?-                                       -?$$$?
-```
-MIT License
+
+================================================================================
+               ESP32-DIV FIRMWARE - HALEHOUND EDITION
+================================================================================
+  Repository:   https://github.com/JesseCHale/ESP32-DIV
+  Author:       Jesse C. Hale (JesseCHale)
+  Website:      https://github.com/JesseCHale
+================================================================================
+
+
+                              MIT LICENSE
 
 Copyright (c) 2023 CiferTech (original ESP32-DIV foundation)
-Copyright (c) 2026 JMFH (HaleHound Edition - complete rewrite)
-
-HaleHound Edition represents a substantial rewrite including:
-- 30+ bug fixes (including v2.5.0 stability improvements)
-- 8 new features (Spectrum Analyzer, ProtoKill, WLAN Jammer, etc.)
-- SPI bus architecture overhaul
-- WiFi Deauther complete overhaul
-- Scanner/Spectrum Analyzer complete redesign
-- Centralized touch calibration for DIY builds
-- Skull wave activity spinner
-- Duggie Edition accessibility support
-- Continued V1 board support
+Copyright (c) 2026 Jesse C. Hale (HaleHound Edition - substantial rewrite)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -72,3 +69,237 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+
+
+================================================================================
+                           PROJECT DESCRIPTION
+================================================================================
+
+ESP32-DIV HaleHound Edition is a substantial rewrite of the original ESP32-DIV
+firmware, designed for ESP32-based wireless security research and penetration
+testing devices. This edition focuses on stability, expanded functionality,
+and continued support for V1 hardware.
+
+HALEHOUND EDITION ENHANCEMENTS:
+
+  Core Improvements:
+    - 30+ bug fixes including v2.5.0 stability improvements
+    - SPI bus architecture overhaul for reliable peripheral communication
+    - Centralized touch calibration system for DIY builds
+    - Memory management optimizations
+    - TX/RX pin swap fix for CC1101 SubGHz module
+
+  New Features:
+    - Spectrum Analyzer with visual frequency display
+    - ProtoKill - Protocol disruption capabilities
+    - WLAN Jammer functionality
+    - WiFi Deauther complete overhaul
+    - Scanner/Spectrum Analyzer complete redesign
+    - Skull wave activity spinner animation
+    - Enhanced menu system and UI improvements
+
+  Accessibility:
+    - Duggie Edition support for accessibility needs
+    - Configurable display and input options
+    - Touch calibration persistence
+
+  Hardware Support:
+    - Continued V1 board support (ESP32-WROOM-32U)
+    - V2 board compatibility (ESP32-S3)
+    - CC1101 SubGHz module integration
+    - NRF24L01 support
+    - TFT display with XPT2046 touch
+
+
+================================================================================
+                            SCOPE OF LICENSE
+================================================================================
+
+This license applies to all contents of this repository, including but not
+limited to:
+
+  - All firmware source code (.cpp, .h, .ino files)
+  - Configuration files and build scripts
+  - Documentation and README files
+  - Hardware pin mappings and schematics references
+  - Menu definitions and UI assets
+  - Supporting libraries developed for this project
+  - ASCII art and branding assets
+
+THIRD-PARTY COMPONENTS:
+This project builds upon and includes components from various open-source
+projects. Where applicable, individual files or directories may contain
+their own licensing terms. Notable dependencies include:
+
+  - ESP32 Arduino Core (LGPL)
+  - TFT_eSPI library
+  - RCSwitch library
+  - Various ESP32 peripheral libraries
+
+Users are responsible for compliance with all applicable third-party licenses.
+
+
+================================================================================
+                        ATTRIBUTION REQUIREMENTS
+================================================================================
+
+When using, modifying, or distributing this software, the following
+attribution requirements apply:
+
+ORIGINAL WORK ATTRIBUTION:
+  - CiferTech created the original ESP32-DIV foundation
+  - Original project: https://github.com/cifertech/ESP32-DIV
+
+HALEHOUND EDITION ATTRIBUTION:
+  - Jesse C. Hale (JesseCHale) developed the HaleHound Edition
+  - HaleHound Edition: https://github.com/JesseCHale/ESP32-DIV
+
+FOR DIRECT USE:
+  - Retain this LICENSE file in any distribution
+  - Maintain copyright notices in source files
+  - Both original and HaleHound copyrights must be preserved
+
+FOR MODIFICATIONS AND FORKS:
+  - Include both original copyright notices
+  - Clearly indicate modifications made
+  - Suggested attribution format:
+
+    "Based on ESP32-DIV HaleHound Edition by Jesse C. Hale"
+    "Original ESP32-DIV by CiferTech"
+    "https://github.com/JesseCHale/ESP32-DIV"
+
+FOR DERIVATIVE WORKS:
+  - You may create derivative works under the same MIT license
+  - Original attribution chain must be preserved
+  - You may add your own copyright for your modifications
+
+
+================================================================================
+                          CONTRIBUTION TERMS
+================================================================================
+
+By submitting contributions to this repository (via pull requests, issues,
+or other means), you agree to the following:
+
+  1. Your contributions are provided under the same MIT License
+  2. You have the right to submit the contribution
+  3. You grant the project maintainer rights to use, modify, and distribute
+     your contribution as part of this project
+  4. Contributions become part of the collective work and are subject to
+     this license
+
+Contributions are welcome and encouraged. Please ensure your submissions:
+  - Follow the existing code style and structure
+  - Include appropriate documentation
+  - Are tested on compatible hardware when possible
+  - Do not introduce regressions in existing functionality
+
+
+================================================================================
+                     DISCLAIMER & RESPONSIBLE USE
+================================================================================
+
+IMPORTANT: READ THIS SECTION CAREFULLY
+
+This firmware and associated tools are provided strictly for:
+
+  [+] AUTHORIZED PENETRATION TESTING
+      Use only on networks and systems you own or have explicit written
+      permission to test.
+
+  [+] SECURITY RESEARCH
+      For studying wireless vulnerabilities and developing defensive
+      measures in controlled environments.
+
+  [+] EDUCATIONAL PURPOSES
+      Learning about wireless security, RF protocols, and ethical
+      hacking methodologies.
+
+  [+] PROFESSIONAL SECURITY ASSESSMENTS
+      Conducted by qualified professionals with proper authorization
+      and scope agreements.
+
+  [+] HAM RADIO AND RF EXPERIMENTATION
+      In compliance with local regulations and licensing requirements.
+
+THE FOLLOWING USES ARE PROHIBITED:
+
+  [-] Unauthorized access to wireless networks or systems
+  [-] Disruption of legitimate wireless communications
+  [-] Jamming or interfering with emergency services or aviation
+  [-] Any activity that violates local, state, federal, or international law
+  [-] Malicious attacks against individuals or organizations
+  [-] Use against systems without explicit written authorization
+
+REGULATORY NOTICE:
+  - Certain functions may be restricted or prohibited in your jurisdiction
+  - RF transmission capabilities must comply with local regulations
+  - Users are responsible for obtaining necessary licenses (e.g., HAM radio)
+  - Some features may violate FCC Part 15 or equivalent regulations
+
+LEGAL NOTICE:
+Unauthorized access to computer systems and wireless networks is a crime in
+most jurisdictions. Jamming or interfering with wireless communications may
+violate federal law (e.g., 47 U.S.C. § 333). Users are solely responsible
+for ensuring compliance with all applicable laws and regulations.
+
+The author(s) assume NO LIABILITY for any misuse, damage, or legal
+consequences arising from the use of this software or hardware.
+
+By using this software, you acknowledge that:
+  - You understand the legal implications of wireless security testing
+  - You will obtain proper authorization before any testing
+  - You accept full responsibility for your actions
+  - The authors bear no responsibility for unauthorized use
+  - You will comply with all applicable RF and wireless regulations
+
+
+================================================================================
+                         HARDWARE DISCLAIMER
+================================================================================
+
+This firmware is designed for specific ESP32-based hardware configurations.
+Improper use may result in:
+
+  - Damage to your ESP32 device or connected peripherals
+  - RF interference with nearby devices
+  - Violation of radio frequency regulations
+  - Voiding of hardware warranties
+
+The authors provide no warranty for hardware compatibility or safety.
+Users assume all risk when flashing and operating this firmware.
+
+SUPPORTED HARDWARE:
+  - ESP32-WROOM-32U (V1 boards)
+  - ESP32-S3 (V2 boards)
+  - Compatible TFT displays with XPT2046 touch
+  - CC1101 SubGHz modules
+  - NRF24L01 modules
+
+Always verify pin mappings and hardware compatibility before use.
+
+
+================================================================================
+                              CONTACT
+================================================================================
+
+  GitHub:       https://github.com/JesseCHale
+  Repository:   https://github.com/JesseCHale/ESP32-DIV
+  Issues:       https://github.com/JesseCHale/ESP32-DIV/issues
+
+ORIGINAL PROJECT:
+  CiferTech:    https://github.com/cifertech
+  Original:     https://github.com/cifertech/ESP32-DIV
+
+
+================================================================================
+                           HALEHOUND EDITION
+================================================================================
+
+     "Security Through Understanding, Protection Through Knowledge"
+
+           Part of the HaleHound Security Research Collection
+
+    ESP32-DIV HaleHound Edition - Keeping V1 Boards Alive Since 2026
+
+================================================================================
